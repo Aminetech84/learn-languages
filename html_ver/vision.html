@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Learning English</title>
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        background: #f8f9fa;
+      }
+      header {
+        background: #0d6efd;
+        color: white;
+        padding: 1rem;
+        text-align: center;
+      }
+      .draggable {
+        background: #ffc107;
+        padding: 0.5rem;
+        margin: 0.25rem;
+        display: inline-block;
+        cursor: grab;
+        border-radius: 0.3rem;
+      }
+      .dropzone {
+        background: #e9ecef;
+        padding: 1rem;
+        min-height: 50px;
+        border: 2px dashed #6c757d;
+        margin: 0.5rem 0;
+      }
+      .spell-card {
+        background: #20c997;
+        padding: 0.5rem;
+        margin: 0.25rem;
+        display: inline-block;
+        border-radius: 0.3rem;
+        cursor: pointer;
+        color: white;
+      }
+      .xp-bar {
+        background: #dee2e6;
+        width: 100%;
+        height: 20px;
+        border-radius: 10px;
+        margin-top: 0.5rem;
+      }
+      .xp-fill {
+        background: #0d6efd;
+        height: 100%;
+        width: 0%;
+        border-radius: 10px;
+        text-align: center;
+        color: white;
+        transition: width 0.5s;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Learn English</h1>
+    </header>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-3">
+      <div class="container-fluid">
+        <div class="navbar-nav">
+          <a class="nav-link" href="#" onclick="showPage('onboarding')"
+            >Onboarding</a
+          >
+          <a class="nav-link" href="#" onclick="showPage('glue-builder')"
+            >Glue Builder</a
+          >
+          <a class="nav-link" href="#" onclick="showPage('structure-mode')"
+            >Structure Mode</a
+          >
+          <a class="nav-link" href="#" onclick="showPage('vocab-expansion')"
+            >Vocab Expansion</a
+          >
+          <a class="nav-link" href="#" onclick="showPage('progress-map')"
+            >Progress Map</a
+          >
+          <a class="nav-link" href="#" onclick="showPage('magic-layer')"
+            >Magic Layer</a
+          >
+          <a class="nav-link" href="#" onclick="showPage('profile')">Profile</a>
+        </div>
+      </div>
+    </nav>
+    <main class="container">
+      <div id="onboarding" class="page">
+        <h2>Onboarding / Domain Selection</h2>
+        <div class="mb-3">
+          <label for="domain-select" class="form-label"
+            >Select your speciality/domain:</label
+          >
+          <select
+            id="domain-select"
+            class="form-select"
+            onchange="updateAnchors()"
+          >
+            <option>IT</option>
+            <option>Healthcare</option>
+            <option>Business</option>
+            <option>Travel</option>
+            <option>Hobbies</option>
+          </select>
+        </div>
+        <div class="card mb-3">
+          <div class="card-body">
+            <h5 class="card-title">Anchor Words Preview</h5>
+            <p id="anchors-text">Placeholder for ~10 words</p>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="showPage('glue-builder')">
+          Start Learning
+        </button>
+      </div>
+
+      <div id="glue-builder" class="page" style="display: none">
+        <h2>Glue Builder</h2>
+        <div class="mb-3">
+          <label for="glue-tier" class="form-label">Select tier:</label>
+          <select id="glue-tier" class="form-select">
+            <option>Basic</option>
+            <option>Intermediate</option>
+            <option>Advanced</option>
+          </select>
+        </div>
+        <div class="card mb-3 p-3">
+          <h5>Drag-drop Exercise</h5>
+          <div id="draggables" class="mb-2">
+            <div class="draggable" draggable="true" ondragstart="drag(event)">
+              and
+            </div>
+            <div class="draggable" draggable="true" ondragstart="drag(event)">
+              but
+            </div>
+            <div class="draggable" draggable="true" ondragstart="drag(event)">
+              or
+            </div>
+          </div>
+          <div
+            class="dropzone"
+            ondrop="drop(event)"
+            ondragover="allowDrop(event)"
+          >
+            Drop here
+          </div>
+        </div>
+        <button class="btn btn-success" onclick="completeGlueTier()">
+          Complete Tier
+        </button>
+        <div class="xp-bar mt-2">
+          <div id="glue-xp" class="xp-fill">0 XP</div>
+        </div>
+      </div>
+
+      <!-- Structure Mode Page -->
+      <div id="structure-mode" class="page" style="display: none">
+        <h2>Structure Mode</h2>
+        <p>Level: Basics → Advanced</p>
+        <div
+          class="dropzone mb-2"
+          ondrop="drop(event)"
+          ondragover="allowDrop(event)"
+          id="structure-canvas"
+        >
+          Build sentence here
+        </div>
+        <div id="structure-draggables" class="mb-2">
+          <div class="draggable" draggable="true" ondragstart="drag(event)">
+            I
+          </div>
+          <div class="draggable" draggable="true" ondragstart="drag(event)">
+            eat
+          </div>
+          <div class="draggable" draggable="true" ondragstart="drag(event)">
+            rice
+          </div>
+        </div>
+        <button class="btn btn-success" onclick="checkStructureSentence()">
+          Check Sentence
+        </button>
+        <div class="xp-bar mt-2">
+          <div id="structure-xp" class="xp-fill">0 XP</div>
+        </div>
+      </div>
+
+      <!-- Vocab Expansion Page -->
+      <div id="vocab-expansion" class="page" style="display: none">
+        <h2>Vocab Expansion</h2>
+        <div class="mb-3">
+          <label for="cefr-select" class="form-label">Select CEFR Pack:</label>
+          <select id="cefr-select" class="form-select" onchange="updateVocab()">
+            <option>A1</option>
+            <option>A2</option>
+            <option>B1</option>
+            <option>B2</option>
+            <option>C1</option>
+            <option>C2</option>
+          </select>
+        </div>
+        <div class="card mb-3">
+          <div class="card-body">
+            <h5 class="card-title">Root Verb + Derivatives</h5>
+            <p id="vocab-text">
+              Verb: decide | Noun: decision | Adjective: decisive | Adverb:
+              decisively
+            </p>
+          </div>
+        </div>
+        <button class="btn btn-success" onclick="practiceVocab()">
+          Practice
+        </button>
+        <div class="xp-bar mt-2">
+          <div id="vocab-xp" class="xp-fill">0 XP</div>
+        </div>
+      </div>
+
+      <!-- Progress Map Page -->
+      <div id="progress-map" class="page" style="display: none">
+        <h2>Progress Map</h2>
+        <div class="card mb-2 p-2">
+          Glue Track: <span id="glue-track">50%</span>
+        </div>
+        <div class="card mb-2 p-2">
+          Structure Track: <span id="structure-track">40%</span>
+        </div>
+        <div class="card mb-2 p-2">
+          Vocab Track: <span id="vocab-track">30%</span>
+        </div>
+        <div class="card mb-2 p-2">
+          Spell Cards Collected: <span id="spell-count">3/10</span>
+        </div>
+      </div>
+
+      <!-- Magic Layer Page -->
+      <div id="magic-layer" class="page" style="display: none">
+        <h2>Magic Layer</h2>
+        <div class="mb-3">
+          <label for="skill-path" class="form-label">Choose Skill Path:</label>
+          <select id="skill-path" class="form-select" onchange="choosePath()">
+            <option>Grammar-Focused</option>
+            <option>Linguistic Explorer</option>
+            <option>Creative Magic</option>
+          </select>
+        </div>
+        <div class="card p-3">
+          <h5>Spell Cards</h5>
+          <div class="spell-card" onclick="useSpell(this)">
+            Conditional Spell
+          </div>
+          <div class="spell-card" onclick="useSpell(this)">
+            Comparison Spell
+          </div>
+          <div class="spell-card" onclick="useSpell(this)">Negation Spell</div>
+        </div>
+      </div>
+
+      <!-- Profile Page -->
+      <div id="profile" class="page" style="display: none">
+        <h2>Profile / Settings</h2>
+        <ul class="list-group">
+          <li class="list-group-item">Language: English</li>
+          <li class="list-group-item">CEFR Target: B2</li>
+          <li class="list-group-item">Daily Goal: 30 mins</li>
+          <li class="list-group-item">
+            XP: <span id="total-xp">120</span> / 500
+          </li>
+          <li class="list-group-item">Badges Collected: 2</li>
+        </ul>
+      </div>
+
+      <!-- Bootstrap JS -->
+      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+      <script>
+        let glueXP = 0,
+          structureXP = 0,
+          vocabXP = 0;
+
+        function showPage(id) {
+          document
+            .querySelectorAll(".page")
+            .forEach((p) => (p.style.display = "none"));
+          document.getElementById(id).style.display = "block";
+        }
+
+        function updateAnchors() {
+          const domain = document.getElementById("domain-select").value;
+          document.getElementById(
+            "anchors-text"
+          ).innerText = `Anchor words for ${domain}: word1, word2, word3, ...`;
+        }
+
+        function updateVocab() {
+          const pack = document.getElementById("cefr-select").value;
+          document.getElementById(
+            "vocab-text"
+          ).innerText = `Showing CEFR ${pack} vocab: Verb: decide | Noun: decision | Adjective: decisive | Adverb: decisively`;
+        }
+
+        function allowDrop(ev) {
+          ev.preventDefault();
+        }
+        function drag(ev) {
+          ev.dataTransfer.setData("text", ev.target.innerText);
+        }
+        function drop(ev) {
+          ev.preventDefault();
+          const data = ev.dataTransfer.getData("text");
+          ev.target.innerText += (ev.target.innerText ? " " : "") + data;
+        }
+
+        function completeGlueTier() {
+          glueXP += 10;
+          if (glueXP > 100) glueXP = 100;
+          const xpBar = document.getElementById("glue-xp");
+          xpBar.style.width = glueXP + "%";
+          xpBar.innerText = glueXP + " XP";
+          alert("Glue tier completed!");
+        }
+
+        function checkStructureSentence() {
+          structureXP += 10;
+          if (structureXP > 100) structureXP = 100;
+          const xpBar = document.getElementById("structure-xp");
+          xpBar.style.width = structureXP + "%";
+          xpBar.innerText = structureXP + " XP";
+          alert("Structure sentence checked!");
+        }
+
+        function practiceVocab() {
+          vocabXP += 10;
+          if (vocabXP > 100) vocabXP = 100;
+          const xpBar = document.getElementById("vocab-xp");
+          xpBar.style.width = vocabXP + "%";
+          xpBar.innerText = vocabXP + " XP";
+          alert("Vocabulary practice completed!");
+        }
+
+        function useSpell(element) {
+          alert("Used " + element.innerText + "! XP +5");
+          let totalXP = parseInt(document.getElementById("total-xp").innerText);
+          totalXP += 5;
+          document.getElementById("total-xp").innerText = totalXP;
+        }
+
+        function choosePath() {
+          const path = document.getElementById("skill-path").value;
+          alert("Selected path: " + path);
+        }
+      </script>
+    </main>
+  </body>
+</html>
