@@ -1,5 +1,4 @@
 import React from "react";
-import * as XLSX from "xlsx";
 
 export default function Core(props) {
 console.log(props);
