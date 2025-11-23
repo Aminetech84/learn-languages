@@ -1,12 +1,14 @@
 import Core from './core';
+import Presentation from './tefl-learning-approaches';
 import content from './content';
 
 function App() {
 
   return (
     <>
-     
-   <Core data={content} />
+     <h1 className="">HERE</h1>
+  
+   <Presentation />
 
     </>
   )
