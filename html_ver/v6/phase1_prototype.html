@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 1 — with</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #F7F4EF;
+    --surface: #FFFFFF;
+    --ink: #1A1814;
+    --ink2: #6B6760;
+    --ink3: #B0ADA8;
+    --accent: #2D5A3D;
+    --accent-light: #EAF2EC;
+    --border: rgba(26,24,20,0.1);
+    --serif: 'Playfair Display', Georgia, serif;
+    --sans: 'DM Sans', sans-serif;
+  }
+
+  body {
+    background: var(--bg);
+    font-family: var(--sans);
+    color: var(--ink);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+
+  .shell {
+    width: 100%;
+    max-width: 390px;
+    min-height: 680px;
+    background: var(--surface);
+    border-radius: 24px;
+    border: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Top bar */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem 1.5rem 0;
+  }
+
+  .day-label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink3);
+  }
+
+  .streak {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--accent);
+    background: var(--accent-light);
+    padding: 3px 10px;
+    border-radius: 99px;
+  }
+
+  /* Progress dots */
+  .dots {
+    display: flex;
+    gap: 5px;
+    padding: 1rem 1.5rem 0;
+  }
+
+  .dot {
+    height: 3px;
+    flex: 1;
+    border-radius: 99px;
+    background: var(--border);
+    transition: background 0.3s;
+  }
+
+  .dot.done { background: var(--accent); }
+  .dot.active { background: var(--ink2); }
+
+  /* Screens */
+  .screen { display: none; flex-direction: column; flex: 1; padding: 1.5rem; animation: fadeUp 0.3s ease; }
+  .screen.active { display: flex; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Screen: Meet */
+  .screen-label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink3);
+    margin-bottom: 1.5rem;
+  }
+
+  .word-display {
+    font-family: var(--serif);
+    font-size: 56px;
+    font-weight: 400;
+    color: var(--ink);
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+
+  .word-pos {
+    font-size: 12px;
+    color: var(--ink3);
+    margin-bottom: 2rem;
+  }
+
+  .sentences { display: flex; flex-direction: column; gap: 12px; flex: 1; }
+
+  .sentence-card {
+    background: var(--bg);
+    border-radius: 12px;
+    padding: 14px 16px;
+    font-size: 15px;
+    color: var(--ink2);
+    line-height: 1.6;
+    border: 1px solid transparent;
+    transition: border-color 0.2s;
+  }
+
+  .sentence-card em {
+    font-style: normal;
+    color: var(--ink);
+    font-weight: 500;
+    border-bottom: 1.5px solid var(--accent);
+  }
+
+  .sentence-source {
+    font-size: 11px;
+    color: var(--ink3);
+    margin-top: 6px;
+  }
+
+  /* Screen: Know it */
+  .know-word {
+    font-family: var(--serif);
+    font-size: 40px;
+    font-weight: 400;
+    margin-bottom: 6px;
+  }
+
+  .know-sub {
+    font-size: 14px;
+    color: var(--ink2);
+    margin-bottom: 2rem;
+    line-height: 1.5;
+  }
+
+  .know-options { display: flex; flex-direction: column; gap: 10px; flex: 1; }
+
+  .know-btn {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 18px;
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--ink);
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.15s, border-color 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .know-btn:hover { background: #F0EDE8; border-color: rgba(26,24,20,0.2); }
+
+  .know-btn .icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  .icon-yes { background: var(--accent-light); }
+  .icon-vague { background: #FFF8E6; }
+  .icon-no { background: #FEF0F0; }
+
+  .know-btn .label { font-weight: 500; font-size: 14px; }
+  .know-btn .desc { font-size: 12px; color: var(--ink3); margin-top: 1px; }
+
+  /* Translation hint */
+  .hint-box {
+    background: var(--accent-light);
+    border-radius: 12px;
+    padding: 16px;
+    margin-top: 1rem;
+    display: none;
+  }
+
+  .hint-box.visible { display: block; }
+  .hint-translation { font-family: var(--serif); font-size: 22px; color: var(--accent); margin-bottom: 4px; }
+  .hint-label { font-size: 11px; color: var(--ink2); text-transform: uppercase; letter-spacing: 0.06em; }
+
+  /* Screen: Connect */
+  .connect-word { font-family: var(--serif); font-size: 40px; font-weight: 400; margin-bottom: 6px; }
+  .connect-sub { font-size: 14px; color: var(--ink2); margin-bottom: 1.5rem; }
+
+  .family-group { margin-bottom: 1.25rem; }
+  .family-type { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink3); margin-bottom: 8px; }
+
+  .family-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+
+  .chip {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 13px;
+    color: var(--ink);
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+  }
+
+  .chip:hover { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
+
+  .chip-tip {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 0;
+    background: var(--ink);
+    color: #fff;
+    font-size: 12px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    white-space: nowrap;
+    z-index: 10;
+  }
+
+  .chip:hover .chip-tip { display: block; }
+
+  /* Screen: Mission */
+  .mission-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: var(--accent-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    margin-bottom: 1.25rem;
+  }
+
+  .mission-title { font-family: var(--serif); font-size: 28px; font-weight: 400; margin-bottom: 8px; line-height: 1.2; }
+  .mission-text { font-size: 15px; color: var(--ink2); line-height: 1.7; flex: 1; }
+  .mission-text strong { color: var(--ink); font-weight: 500; }
+
+  .mission-reminder {
+    background: var(--bg);
+    border-radius: 12px;
+    padding: 14px 16px;
+    font-size: 13px;
+    color: var(--ink2);
+    line-height: 1.6;
+    margin-top: 1.25rem;
+    border-left: 3px solid var(--accent);
+  }
+
+  /* Screen: Done */
+  .done-center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+  .done-ring {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: var(--accent-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    margin-bottom: 1.5rem;
+  }
+  .done-title { font-family: var(--serif); font-size: 28px; font-weight: 400; margin-bottom: 8px; }
+  .done-sub { font-size: 14px; color: var(--ink2); line-height: 1.6; margin-bottom: 2rem; }
+  .done-next { font-size: 13px; color: var(--ink3); }
+  .done-next strong { color: var(--ink2); font-weight: 500; }
+
+  /* Bottom action */
+  .bottom { padding: 1.25rem 1.5rem 1.5rem; }
+
+  .btn-main {
+    width: 100%;
+    padding: 14px;
+    background: var(--ink);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-family: var(--sans);
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+
+  .btn-main:hover { opacity: 0.88; }
+  .btn-main:active { transform: scale(0.98); }
+
+  .btn-ghost {
+    width: 100%;
+    padding: 10px;
+    background: transparent;
+    color: var(--ink3);
+    border: none;
+    font-family: var(--sans);
+    font-size: 13px;
+    cursor: pointer;
+    margin-top: 6px;
+  }
+
+  .btn-ghost:hover { color: var(--ink2); }
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <div class="topbar">
+    <span class="day-label">Day 1 of 60</span>
+    <span class="streak">🔥 1 day streak</span>
+  </div>
+  <div class="dots" id="dots">
+    <div class="dot active"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+  </div>
+
+  <!-- Screen 0: Meet the word -->
+  <div class="screen active" id="s0">
+    <p class="screen-label">Meet the word</p>
+    <p class="word-display">with</p>
+    <p class="word-pos">preposition</p>
+    <div class="sentences">
+      <div class="sentence-card">
+        She came <em>with</em> her sister to the market.
+        <p class="sentence-source">— everyday conversation</p>
+      </div>
+      <div class="sentence-card">
+        He made it <em>with</em> whatever he had at home.
+        <p class="sentence-source">— cooking show</p>
+      </div>
+      <div class="sentence-card">
+        I can't do this <em>with</em>out your help.
+        <p class="sentence-source">— news article</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Screen 1: Know it? -->
+  <div class="screen" id="s1">
+    <p class="screen-label">Do you know it?</p>
+    <p class="know-word">with</p>
+    <p class="know-sub">Be honest — this is just for you.</p>
+    <div class="know-options">
+      <button class="know-btn" onclick="goTo(2)">
+        <div class="icon icon-yes">✓</div>
+        <div>
+          <div class="label">Yes, I know it</div>
+          <div class="desc">I can use it in a sentence</div>
+        </div>
+      </button>
+      <button class="know-btn" onclick="showHint()">
+        <div class="icon icon-vague">?</div>
+        <div>
+          <div class="label">I've seen it before</div>
+          <div class="desc">Show me a hint</div>
+        </div>
+      </button>
+      <button class="know-btn" onclick="showHint()">
+        <div class="icon icon-no">✗</div>
+        <div>
+          <div class="label">Never seen it</div>
+          <div class="desc">Show me the translation</div>
+        </div>
+      </button>
+    </div>
+    <div class="hint-box" id="hint">
+      <div class="hint-label">Arabic translation</div>
+      <div class="hint-translation">مع</div>
+    </div>
+  </div>
+
+  <!-- Screen 2: Connect -->
+  <div class="screen" id="s2">
+    <p class="screen-label">Word family</p>
+    <p class="connect-word">with</p>
+    <p class="connect-sub">Tap any word to see its meaning</p>
+
+    <div class="family-group">
+      <p class="family-type">Compounds</p>
+      <div class="family-chips">
+        <div class="chip">without<div class="chip-tip">lacking, not having</div></div>
+        <div class="chip">within<div class="chip-tip">inside, not beyond</div></div>
+        <div class="chip">withdraw<div class="chip-tip">to take back or leave</div></div>
+        <div class="chip">withstand<div class="chip-tip">to resist, endure</div></div>
+      </div>
+    </div>
+
+    <div class="family-group">
+      <p class="family-type">Common phrases</p>
+      <div class="family-chips">
+        <div class="chip">deal with<div class="chip-tip">to handle or manage</div></div>
+        <div class="chip">come with<div class="chip-tip">to be included or accompany</div></div>
+        <div class="chip">go with<div class="chip-tip">to match or accompany</div></div>
+        <div class="chip">with regard to<div class="chip-tip">concerning, about</div></div>
+      </div>
+    </div>
+
+    <div class="family-group">
+      <p class="family-type">Notice the pattern</p>
+      <div class="family-chips">
+        <div class="chip">with- prefix<div class="chip-tip">Often means "against" or "back" in compounds</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Screen 3: Mission -->
+  <div class="screen" id="s3">
+    <p class="screen-label">Your mission</p>
+    <div class="mission-icon">🎯</div>
+    <p class="mission-title">Go find it today</p>
+    <p class="mission-text">
+      Before tomorrow, notice <strong>"with"</strong> somewhere in your real world — a sign, a conversation, a song, a message.<br><br>
+      Then use it once. Write one sentence, say it out loud, send it in a message.
+    </p>
+    <div class="mission-reminder">
+      Try: <em>"I made coffee with milk this morning."</em><br>
+      Or: <em>"I went to the shop with my brother."</em>
+    </div>
+  </div>
+
+  <!-- Screen 4: Done -->
+  <div class="screen" id="s4">
+    <div class="done-center">
+      <div class="done-ring">✦</div>
+      <p class="done-title">Day 1 complete</p>
+      <p class="done-sub">You've met <strong>with</strong> and its whole family.<br>The rest is up to you today.</p>
+      <p class="done-next">Tomorrow — <strong>in</strong></p>
+    </div>
+  </div>
+
+  <!-- Bottom action area -->
+  <div class="bottom" id="bottom">
+    <button class="btn-main" id="mainBtn" onclick="next()">See the sentences →</button>
+    <button class="btn-ghost" id="ghostBtn" onclick="goTo(1)" style="display:none">I already know this word</button>
+  </div>
+</div>
+
+<script>
+let current = 0;
+const total = 5;
+
+const labels = [
+  "See the sentences →",
+  null,
+  "Explore the word family →",
+  "Got my mission →",
+  null
+];
+
+const ghosts = [true, false, false, false, false];
+
+function updateDots(n) {
+  const dots = document.querySelectorAll('.dot');
+  dots.forEach((d, i) => {
+    d.className = 'dot';
+    if (i < n) d.classList.add('done');
+    else if (i === n) d.classList.add('active');
+  });
+}
+
+function goTo(n) {
+  document.getElementById('s' + current).classList.remove('active');
+  current = n;
+  document.getElementById('s' + current).classList.add('active');
+  updateDots(current);
+
+  const btn = document.getElementById('mainBtn');
+  const ghost = document.getElementById('ghostBtn');
+
+  if (labels[current]) {
+    btn.textContent = labels[current];
+    btn.style.display = 'block';
+    btn.onclick = next;
+  } else if (current === 1) {
+    btn.style.display = 'none';
+  } else if (current === 4) {
+    btn.textContent = 'Start over';
+    btn.style.display = 'block';
+    btn.onclick = () => { goTo(0); document.getElementById('hint').classList.remove('visible'); };
+  }
+
+  ghost.style.display = (current === 0) ? 'block' : 'none';
+}
+
+function next() { goTo(current + 1); }
+
+function showHint() {
+  document.getElementById('hint').classList.add('visible');
+  const btn = document.getElementById('mainBtn');
+  btn.textContent = 'Continue →';
+  btn.style.display = 'block';
+  btn.onclick = () => goTo(2);
+}
+
+updateDots(0);
+</script>
+</body>
+</html>

@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Activation Loop — hand</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #f4f6fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* App container */
+        .app {
+            max-width: 600px;
+            width: 100%;
+            background: white;
+            border-radius: 32px;
+            box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        /* Header */
+        .header {
+            padding: 20px 24px 0 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            border-bottom: 1px solid #eef2f6;
+            margin-bottom: 8px;
+        }
+
+        .day-badge {
+            font-size: 14px;
+            font-weight: 500;
+            color: #3b82f6;
+            background: #eff6ff;
+            padding: 4px 12px;
+            border-radius: 40px;
+        }
+
+        .progress {
+            font-size: 14px;
+            color: #5b6e8c;
+        }
+
+        /* Main content */
+        .content {
+            padding: 16px 24px 24px 24px;
+        }
+
+        /* Screen transitions */
+        .screen {
+            display: none;
+            animation: fadeIn 0.25s ease;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h2 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #0a2540;
+        }
+
+        .subhead {
+            font-size: 16px;
+            color: #5b6e8c;
+            margin-bottom: 24px;
+            border-left: 3px solid #3b82f6;
+            padding-left: 12px;
+        }
+
+        /* sentences */
+        .sentence-card {
+            background: #f8fafc;
+            border-radius: 20px;
+            padding: 16px;
+            margin-bottom: 16px;
+            border: 1px solid #e9edf2;
+        }
+
+        .sentence-source {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+            color: #3b82f6;
+            margin-bottom: 8px;
+        }
+
+        .sentence-text {
+            font-size: 18px;
+            line-height: 1.4;
+            color: #1e2f44;
+        }
+
+        /* family map */
+        .family-map {
+            background: #fefce8;
+            border-radius: 24px;
+            padding: 20px 16px;
+            margin: 20px 0;
+            text-align: center;
+            border: 1px solid #fde68a;
+        }
+
+        .root-word {
+            font-size: 32px;
+            font-weight: 700;
+            color: #b45309;
+            background: #fffbeb;
+            display: inline-block;
+            padding: 8px 24px;
+            border-radius: 60px;
+            margin-bottom: 20px;
+            letter-spacing: 1px;
+        }
+
+        .family-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 8px;
+        }
+
+        .family-item {
+            background: white;
+            border: 1px solid #fed7aa;
+            padding: 8px 16px;
+            border-radius: 40px;
+            font-weight: 500;
+            color: #92400e;
+            cursor: pointer;
+            transition: all 0.1s;
+            font-size: 16px;
+        }
+
+        .family-item:active {
+            background: #fed7aa;
+            transform: scale(0.97);
+        }
+
+        .family-definition {
+            margin-top: 20px;
+            background: white;
+            border-radius: 20px;
+            padding: 12px 16px;
+            font-size: 15px;
+            color: #2d3a4b;
+            border-left: 4px solid #f59e0b;
+            text-align: left;
+        }
+
+        /* buttons */
+        .btn {
+            background: #0f172a;
+            color: white;
+            border: none;
+            padding: 14px 20px;
+            font-size: 16px;
+            font-weight: 500;
+            border-radius: 60px;
+            width: 100%;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.15s;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
+        }
+
+        .btn-primary:active {
+            background: #2563eb;
+            transform: scale(0.98);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: #3b82f6;
+            border: 1px solid #bfdbfe;
+            margin-top: 12px;
+        }
+
+        .btn-outline:active {
+            background: #eff6ff;
+        }
+
+        /* notice challenge */
+        .challenge-box {
+            background: #ecfdf5;
+            border-radius: 24px;
+            padding: 20px;
+            border: 1px solid #a7f3d0;
+            margin: 16px 0;
+        }
+
+        .checkin-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .checkin-btn {
+            flex: 1;
+            text-align: center;
+            background: #f1f5f9;
+            padding: 12px;
+            border-radius: 60px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 14px;
+            border-radius: 24px;
+            border: 1px solid #cbd5e1;
+            font-family: inherit;
+            font-size: 16px;
+            margin-top: 12px;
+        }
+
+        .small-note {
+            font-size: 13px;
+            color: #5b6e8c;
+            margin-top: 12px;
+            text-align: center;
+        }
+
+        hr {
+            margin: 20px 0;
+            border: none;
+            border-top: 1px solid #eef2f6;
+        }
+    </style>
+</head>
+<body>
+<div class="app" id="app">
+    <div class="header">
+        <span class="day-badge">DAY 21</span>
+        <span class="progress">activation loop</span>
+    </div>
+    <div class="content" id="contentContainer">
+        <!-- SCREEN 1: SEE IT -->
+        <div id="screen1" class="screen active">
+            <h2>hand</h2>
+            <div class="subhead">You've seen this word before. A lot.</div>
+
+            <div class="sentence-card">
+                <div class="sentence-source">🎬 from a movie</div>
+                <div class="sentence-text">"He handed me a note and walked away without a word."</div>
+            </div>
+            <div class="sentence-card">
+                <div class="sentence-source">💬 from a conversation</div>
+                <div class="sentence-text">"Can you give me a hand with these boxes? They're heavier than I thought."</div>
+            </div>
+            <div class="sentence-card">
+                <div class="sentence-source">📰 from a news headline</div>
+                <div class="sentence-text">"Police say the situation is getting out of hand as protests continue."</div>
+            </div>
+
+            <button class="btn btn-primary" id="toFamilyBtn">Show me the family →</button>
+        </div>
+
+        <!-- SCREEN 2: CONNECT IT (family map) -->
+        <div id="screen2" class="screen">
+            <h2>hand's family</h2>
+            <div class="subhead">You know these. You just didn't see they're connected.</div>
+
+            <div class="family-map">
+                <div class="root-word">hand</div>
+                <div class="family-grid" id="familyGrid">
+                    <div class="family-item" data-word="handy">handy</div>
+                    <div class="family-item" data-word="handful">handful</div>
+                    <div class="family-item" data-word="handbag">handbag</div>
+                    <div class="family-item" data-word="handshake">handshake</div>
+                    <div class="family-item" data-word="underhand">underhand</div>
+                    <div class="family-item" data-word="overhand">overhand</div>
+                </div>
+                <div id="familyDefinition" class="family-definition">
+                    👆 Tap any word to see it in a sentence.
+                </div>
+            </div>
+
+            <button class="btn btn-primary" id="toNoticeBtn">Got it — let's notice →</button>
+        </div>
+
+        <!-- SCREEN 3: NOTICE IT (challenge) -->
+        <div id="screen3" class="screen">
+            <h2>👀 catch it in the wild</h2>
+            <div class="subhead">Today's challenge</div>
+
+            <div class="challenge-box">
+                <p style="font-weight: 500; margin-bottom: 12px;">Before tomorrow, find <strong>hand</strong> or a word from its family somewhere real.</p>
+                <ul style="margin-left: 20px; color: #2c5a2e;">
+                    <li>a sentence in an article</li>
+                    <li>a line in a show / movie</li>
+                    <li>something someone says to you</li>
+                    <li>a sign, an ad, a book title</li>
+                </ul>
+                <p style="margin-top: 16px;"><em>It can be: hand • handy • handful • handbag • handshake • underhand • overhand</em></p>
+                <hr>
+                <p style="font-size: 14px;">✅ You don't have to write anything now. Tomorrow the app will ask what you saw.</p>
+            </div>
+
+            <button class="btn btn-primary" id="toPreviewBtn">I'll look for it →</button>
+        </div>
+
+        <!-- SCREEN 4: PREVIEW (tomorrow's check-in) -->
+        <div id="screen4" class="screen">
+            <h2>🔁 tomorrow's check-in</h2>
+            <div class="subhead">closing the loop</div>
+
+            <div class="challenge-box" style="background:#eff6ff;">
+                <p><strong>When you open the app tomorrow, it will ask:</strong></p>
+                <p style="margin: 12px 0;">🗣️ <em>"Did you catch 'hand' or one of its family in the world yesterday?"</em></p>
+                <div style="display: flex; gap: 12px; margin: 12px 0;">
+                    <span style="background:white; padding:8px 16px; border-radius:40px;">✅ Yes, here's what I saw</span>
+                    <span style="background:white; padding:8px 16px; border-radius:40px;">⏳ Not yet, remind me</span>
+                </div>
+                <p>📝 Then: <em>"Now use it once. Say or type one sentence with 'hand' or a word from its family."</em></p>
+                <div style="background:white; border-radius:24px; padding:12px; margin-top:12px; color:#aaa;">[Type your sentence]</div>
+                <p class="small-note">That's it. 30 seconds. Then you move to the next word.</p>
+            </div>
+
+            <button class="btn btn-primary" id="toCompleteBtn">Done — start tomorrow's word →</button>
+        </div>
+
+        <!-- SCREEN 5: COMPLETE (daily summary) -->
+        <div id="screen5" class="screen">
+            <h2>✓ hand · activated</h2>
+            <div class="subhead">You didn't "study" it. You connected it.</div>
+            <div style="background:#f1f5f9; border-radius: 24px; padding: 20px;">
+                <p>✅ Saw it in real sentences</p>
+                <p>✅ Saw how it connects to words you already use</p>
+                <p>✅ Got a simple challenge to notice it today</p>
+                <p>✅ Tomorrow you'll use it once</p>
+                <br>
+                <p><strong>That's the whole method. One word. Deeply activated.</strong></p>
+                <p style="margin-top: 12px;">Tomorrow: <strong style="background:#e2e8f0; padding:2px 8px; border-radius:20px;">take</strong></p>
+            </div>
+            <button class="btn btn-outline" id="restartBtn">↻ Try another word (restart demo)</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- Family definitions for tap-to-show
+    const familyMeanings = {
+        handy: "🔧 *This tool is really handy when you're working alone.* — (useful, close at hand)",
+        handful: "🍼 *Three kids under five is a handful.* — (difficult to manage, or a small number you can hold)",
+        handbag: "👜 *She left her handbag on the chair.* — (a bag carried by hand)",
+        handshake: "🤝 *They sealed the deal with a handshake.* — (gripping hands as greeting or agreement)",
+        underhand: "🎣 *That was an underhand trick.* — (sneaky, dishonest — from throwing underhand)",
+        overhand: "⚾ *He threw the ball overhand.* — (throwing with hand above shoulder)"
+    };
+
+    // Screen navigation
+    const screens = {
+        1: document.getElementById('screen1'),
+        2: document.getElementById('screen2'),
+        3: document.getElementById('screen3'),
+        4: document.getElementById('screen4'),
+        5: document.getElementById('screen5')
+    };
+
+    function showScreen(screenNumber) {
+        Object.values(screens).forEach(screen => {
+            if (screen) screen.classList.remove('active');
+        });
+        const target = screens[screenNumber];
+        if (target) target.classList.add('active');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Event listeners for navigation
+    document.getElementById('toFamilyBtn')?.addEventListener('click', () => showScreen(2));
+    document.getElementById('toNoticeBtn')?.addEventListener('click', () => showScreen(3));
+    document.getElementById('toPreviewBtn')?.addEventListener('click', () => showScreen(4));
+    document.getElementById('toCompleteBtn')?.addEventListener('click', () => showScreen(5));
+    document.getElementById('restartBtn')?.addEventListener('click', () => showScreen(1));
+
+    // Family map interactive taps
+    const familyItems = document.querySelectorAll('.family-item');
+    const definitionBox = document.getElementById('familyDefinition');
+
+    if (familyItems.length && definitionBox) {
+        familyItems.forEach(item => {
+            item.addEventListener('click', (e) => {
+                const word = item.getAttribute('data-word');
+                if (word && familyMeanings[word]) {
+                    definitionBox.innerHTML = `📖 ${familyMeanings[word]}`;
+                } else {
+                    definitionBox.innerHTML = `✨ "${word}" — tap again to see an example.`;
+                }
+            });
+        });
+    }
+
+    // simple reset: if user restarts, also reset definition preview
+    document.getElementById('restartBtn')?.addEventListener('click', () => {
+        if (definitionBox) {
+            definitionBox.innerHTML = '👆 Tap any word to see it in a sentence.';
+        }
+    });
+</script>
+</body>
+</html>

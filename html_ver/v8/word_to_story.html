@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CoreLang — We start with a word</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;1,400;1,500&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root {
+  --bg: #F5F2ED;
+  --ink: #1C1917;
+  --ink2: #78716C;
+  --ink3: #B0ADA8;
+  --surface: #FFFFFF;
+  --border: rgba(28,25,23,0.08);
+  --accent: #2D5A3D;
+  --accent-bg: #EAF2EC;
+  --serif: 'Lora', Georgia, serif;
+  --sans: 'DM Sans', sans-serif;
+  --mono: 'DM Mono', monospace;
+}
+
+body {
+  background: var(--bg);
+  font-family: var(--sans);
+  color: var(--ink);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 3rem 1.5rem 5rem;
+}
+
+.wrap { width: 100%; max-width: 620px; }
+
+/* Top label */
+.top-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink3);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 3rem;
+  text-align: center;
+}
+
+/* The growing sentence — heart of the page */
+.sentence-stage {
+  min-height: 140px;
+  margin-bottom: 2.5rem;
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 0;
+  line-height: 1.8;
+}
+
+.word-token {
+  font-family: var(--serif);
+  font-size: 28px;
+  font-weight: 400;
+  color: var(--ink);
+  display: inline;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.4s ease, transform 0.4s ease, color 0.3s;
+  white-space: pre;
+}
+
+.word-token.visible { opacity: 1; transform: translateY(0); }
+.word-token.new { color: var(--accent); }
+.word-token.fading { color: var(--ink); transition: color 1.2s ease; }
+
+/* Step indicator */
+.steps-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 2.5rem;
+}
+
+.step-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 0.5px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+  opacity: 0.4;
+}
+
+.step-row.active {
+  opacity: 1;
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+.step-row.done { opacity: 0.6; }
+.step-row.done .step-num { background: var(--accent); color: white; border-color: var(--accent); }
+
+.step-num {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 0.5px solid var(--ink3);
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.step-row.active .step-num {
+  background: var(--ink);
+  color: white;
+  border-color: var(--ink);
+}
+
+.step-info { flex: 1; }
+
+.step-what {
+  font-size: 11px;
+  font-family: var(--mono);
+  color: var(--ink3);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-bottom: 2px;
+}
+
+.step-row.active .step-what { color: var(--ink2); }
+
+.step-addition {
+  font-family: var(--serif);
+  font-size: 16px;
+  color: var(--ink);
+  font-style: italic;
+}
+
+.step-arrow {
+  font-size: 12px;
+  color: var(--ink3);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.step-row.active .step-arrow { opacity: 1; }
+
+/* Word card — what gets taught */
+.word-card {
+  background: var(--surface);
+  border: 0.5px solid var(--border);
+  border-radius: 14px;
+  padding: 1.5rem;
+  margin-bottom: 1.75rem;
+  min-height: 100px;
+  transition: opacity 0.3s;
+}
+
+.wc-top {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.wc-word {
+  font-family: var(--serif);
+  font-size: 26px;
+  font-weight: 500;
+  color: var(--accent);
+}
+
+.wc-pos {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink3);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.wc-note {
+  font-size: 14px;
+  color: var(--ink2);
+  line-height: 1.6;
+}
+
+.wc-note em {
+  font-style: normal;
+  color: var(--ink);
+  font-weight: 500;
+}
+
+/* Bottom action */
+.action-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tagline {
+  font-family: var(--serif);
+  font-size: 13px;
+  font-style: italic;
+  color: var(--ink3);
+}
+
+.btn-next {
+  padding: 10px 24px;
+  background: var(--ink);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+}
+
+.btn-next:hover { opacity: 0.85; }
+.btn-next:active { transform: scale(0.97); }
+.btn-next:disabled { opacity: 0.3; cursor: default; }
+
+.btn-restart {
+  padding: 10px 24px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: none;
+  transition: opacity 0.15s;
+}
+
+.btn-restart:hover { opacity: 0.85; }
+
+/* Final state */
+.final-note {
+  display: none;
+  text-align: center;
+  padding: 1.5rem;
+  background: var(--accent-bg);
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  border: 0.5px solid rgba(45,90,61,0.15);
+}
+
+.final-note p {
+  font-family: var(--serif);
+  font-size: 15px;
+  font-style: italic;
+  color: var(--accent);
+  line-height: 1.7;
+}
+
+@keyframes pulse {
+  0%,100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.cursor {
+  display: inline-block;
+  width: 2px;
+  height: 28px;
+  background: var(--accent);
+  margin-left: 2px;
+  vertical-align: middle;
+  animation: pulse 1s infinite;
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="top-label">CoreLang · we start with a word, we reach a story</p>
+
+  <div class="sentence-stage" id="stage"><span class="cursor" id="cursor"></span></div>
+
+  <div class="steps-wrap" id="stepsList"></div>
+
+  <div class="word-card" id="wordCard"></div>
+
+  <div class="final-note" id="finalNote">
+    <p>From one word — a life.<br>Every piece you learned lives inside this sentence.</p>
+  </div>
+
+  <div class="action-row">
+    <span class="tagline" id="tagline">day 1 of 60</span>
+    <button class="btn-next" id="btnNext" onclick="advance()">add next word →</button>
+    <button class="btn-restart" id="btnRestart" onclick="restart()">start over</button>
+  </div>
+
+</div>
+
+<script>
+const steps = [
+  {
+    add: ["woman"],
+    what: "anchor noun",
+    addition: "woman",
+    word: "woman",
+    pos: "noun",
+    note: "The center of the sentence. Everything else orbits around her."
+  },
+  {
+    add: ["The ", "woman"],
+    what: "determiner",
+    addition: "the",
+    word: "the",
+    pos: "determiner",
+    note: "<em>The</em> makes her specific. Not just any woman — this woman. One tiny word, enormous difference."
+  },
+  {
+    add: ["The ", "young ", "woman"],
+    what: "adjective",
+    addition: "young",
+    word: "young",
+    pos: "adjective",
+    note: "Slot in before the noun. <em>Young</em> describes her. Swap it: old woman, tired woman, strong woman. Same slot, new meaning."
+  },
+  {
+    add: ["The ", "young ", "woman ", "gets up"],
+    what: "verb (root form)",
+    addition: "gets up",
+    word: "get up",
+    pos: "phrasal verb",
+    note: "<em>Get up</em> — she moves. The sentence is alive now. Root: <em>get</em>. The particle <em>up</em> adds direction."
+  },
+  {
+    add: ["The ", "young ", "woman ", "gets up ", "early"],
+    what: "adverb",
+    addition: "early",
+    word: "early",
+    pos: "adverb",
+    note: "<em>Early</em> tells us when. Adverbs answer: how? when? where? how much? Slot them near the verb."
+  },
+  {
+    add: ["The ", "young ", "woman ", "gets up ", "early ", "because"],
+    what: "conjunction",
+    addition: "because",
+    word: "because",
+    pos: "conjunction",
+    note: "<em>Because</em> opens a new room in the sentence. It promises a reason is coming. The listener leans in."
+  },
+  {
+    add: ["The ", "young ", "woman ", "gets up ", "early ", "because ", "she ", "loves"],
+    what: "pronoun + verb",
+    addition: "she loves",
+    word: "love",
+    pos: "verb",
+    note: "<em>She</em> refers back to the woman — no repetition needed. <em>Loves</em> is the root <em>love</em> in third person. One letter added, everything clicks."
+  },
+  {
+    add: ["The ", "young ", "woman ", "gets up ", "early ", "because ", "she ", "loves ", "her ", "job,"],
+    what: "possessive + noun",
+    addition: "her job",
+    word: "job",
+    pos: "noun",
+    note: "<em>Her job</em> — the reason. <em>Her</em> links back to the woman. Now we know why she gets up early. The sentence has a soul."
+  },
+  {
+    add: ["The ", "young ", "woman ", "gets up ", "early ", "because ", "she ", "loves ", "her ", "job, ", "and"],
+    what: "coordinator",
+    addition: "and",
+    word: "and",
+    pos: "conjunction",
+    note: "<em>And</em> is the simplest connector in English. It adds without switching direction. A second thought is coming."
+  },
+  {
+    add: ["The ", "young ", "woman ", "gets up ", "early ", "because ", "she ", "loves ", "her ", "job, ", "and ", "she ", "carries on ", "working"],
+    what: "phrasal verb",
+    addition: "carries on working",
+    word: "carry on",
+    pos: "phrasal verb",
+    note: "<em>Carry on</em> replaced the root <em>continue</em>. Same meaning — but this is how people actually speak. Phrasal verbs are English in motion."
+  },
+  {
+    add: ["The ", "young ", "woman ", "gets up ", "early ", "because ", "she ", "loves ", "her ", "job, ", "and ", "she ", "carries on ", "working ", "happily ", "all ", "day."],
+    what: "adverb + time phrase",
+    addition: "happily all day",
+    word: "happily",
+    pos: "adverb",
+    note: "<em>Happily</em> — root <em>happy</em>, suffix <em>-ly</em> turns adjective into adverb. <em>All day</em> closes the time. The sentence is complete."
+  }
+];
+
+let current = -1;
+let tokens = [];
+
+function buildStepsList() {
+  document.getElementById('stepsList').innerHTML = steps.map((s, i) => `
+    <div class="step-row" id="sr${i}">
+      <div class="step-num">${i+1}</div>
+      <div class="step-info">
+        <div class="step-what">${s.what}</div>
+        <div class="step-addition">${s.addition}</div>
+      </div>
+      <span class="step-arrow">→</span>
+    </div>
+  `).join('');
+}
+
+function updateSteps() {
+  steps.forEach((s, i) => {
+    const row = document.getElementById('sr' + i);
+    row.className = 'step-row';
+    if (i < current) row.classList.add('done');
+    else if (i === current) row.classList.add('active');
+
+    row.onclick = () => {
+      if (i <= current) jumpTo(i);
+    };
+  });
+}
+
+function renderStage(highlightLast) {
+  const stage = document.getElementById('stage');
+  if (current < 0) {
+    stage.innerHTML = '<span class="cursor" id="cursor"></span>';
+    return;
+  }
+  const s = steps[current];
+  const words = s.add;
+  let html = '';
+  words.forEach((w, i) => {
+    const isNew = highlightLast && i >= words.length - (steps[current].add.length - (current > 0 ? steps[current-1].add.length : 0));
+    html += `<span class="word-token visible ${isNew ? 'new' : ''}" id="tok${i}">${w}</span>`;
+  });
+  if (current < steps.length - 1) html += '<span class="cursor"></span>';
+  stage.innerHTML = html;
+
+  if (highlightLast) {
+    setTimeout(() => {
+      document.querySelectorAll('.word-token.new').forEach(el => {
+        el.classList.add('fading');
+        el.classList.remove('new');
+      });
+    }, 1200);
+  }
+}
+
+function renderCard() {
+  if (current < 0) { document.getElementById('wordCard').innerHTML = ''; return; }
+  const s = steps[current];
+  document.getElementById('wordCard').innerHTML = `
+    <div class="wc-top">
+      <span class="wc-word">${s.word}</span>
+      <span class="wc-pos">${s.pos}</span>
+    </div>
+    <p class="wc-note">${s.note}</p>
+  `;
+}
+
+function advance() {
+  if (current >= steps.length - 1) return;
+  current++;
+  renderStage(true);
+  renderCard();
+  updateSteps();
+
+  const sr = document.getElementById('sr' + current);
+  if (sr) sr.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  if (current === steps.length - 1) {
+    document.getElementById('btnNext').style.display = 'none';
+    document.getElementById('btnRestart').style.display = 'inline-block';
+    document.getElementById('finalNote').style.display = 'block';
+    document.getElementById('tagline').style.display = 'none';
+  }
+}
+
+function jumpTo(i) {
+  current = i;
+  renderStage(false);
+  renderCard();
+  updateSteps();
+}
+
+function restart() {
+  current = -1;
+  document.getElementById('btnNext').style.display = 'inline-block';
+  document.getElementById('btnRestart').style.display = 'none';
+  document.getElementById('finalNote').style.display = 'none';
+  document.getElementById('tagline').style.display = 'inline';
+  renderStage(false);
+  renderCard();
+  updateSteps();
+}
+
+buildStepsList();
+updateSteps();
+renderStage(false);
+renderCard();
+</script>
+</body>
+</html>
