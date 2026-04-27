@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>CoreLang · silent sentence engine</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <style>
+    body {
+      background: #f4f9fe;
+      font-family: system-ui, 'Segoe UI', 'Inter', -apple-system, sans-serif;
+    }
+    .core-card {
+      border: none;
+      border-radius: 2rem;
+      background: rgba(255,255,255,0.98);
+      box-shadow: 0 20px 35px -12px rgba(0,0,0,0.05), 0 0 0 1px rgba(0,0,0,0.01);
+    }
+    .sentence-glow {
+      font-size: 1.7rem;
+      font-weight: 520;
+      background: #ffffff;
+      border-radius: 2rem;
+      padding: 1.2rem 1.2rem;
+      line-height: 1.4;
+      border: 1px solid #eef2f8;
+      transition: all 0.1s ease;
+      cursor: pointer;
+    }
+    .sentence-glow:active {
+      transform: scale(0.99);
+    }
+    .depth-slider-container {
+      background: #edf2f7;
+      border-radius: 60px;
+      padding: 0.2rem;
+    }
+    .depth-option {
+      flex: 1;
+      text-align: center;
+      padding: 0.5rem 0;
+      border-radius: 60px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: 0.1s;
+      color: #2c4b5e;
+    }
+    .depth-option.active-depth {
+      background: #1f3e48;
+      color: white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    .suggestion-chip {
+      background: #eef2ff;
+      padding: 0.4rem 1.2rem;
+      border-radius: 60px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.1s;
+      border: 1px solid #e0e7ff;
+      display: inline-block;
+    }
+    .suggestion-chip:hover {
+      background: #e0e7fa;
+      transform: scale(0.96);
+    }
+    .feedback-bubble {
+      background: #fef9e6;
+      border-radius: 1.5rem;
+      padding: 0.8rem 1.2rem;
+      border-left: 4px solid #f5b042;
+      font-size: 0.9rem;
+    }
+    .word-tag {
+      background: #ecf3f8;
+      border-radius: 40px;
+      padding: 0.2rem 0.7rem;
+      font-size: 0.7rem;
+      display: inline-block;
+      cursor: pointer;
+      transition: 0.1s;
+    }
+    .word-tag:hover {
+      background: #dce6ef;
+      transform: scale(0.95);
+    }
+    .btn-outline-magic {
+      border-radius: 60px;
+      border: 1px solid #cbdce6;
+      background: white;
+      padding: 0.4rem 1.2rem;
+    }
+    footer {
+      border-top: 1px solid #eef2f8;
+    }
+    @media (max-width: 640px) {
+      .sentence-glow { font-size: 1.2rem; }
+    }
+  </style>
+</head>
+<body class="pt-4 pb-5">
+
+<div class="container" style="max-width: 960px;">
+  <!-- header silent -->
+  <div class="text-center mb-4">
+    <h2 class="fw-semibold" style="color: #1f3e48;">one sentence · infinite depth</h2>
+    <p class="text-secondary-emphasis small">tap words. slide depth. the engine learns with you.</p>
+  </div>
+
+  <div class="core-card p-4 p-md-5 mb-4">
+    <!-- sentence display (interactive) -->
+    <div class="sentence-glow text-center mb-4" id="sentenceDisplay">
+      The woman goes to work.
+    </div>
+
+    <!-- depth slider (invisible stages) -->
+    <div class="depth-slider-container d-flex mb-4">
+      <div data-depth="1" class="depth-option active-depth">🌱 glue</div>
+      <div data-depth="2" class="depth-option">📦 core</div>
+      <div data-depth="3" class="depth-option">🌀 phrasal</div>
+      <div data-depth="4" class="depth-option">✨ affix</div>
+    </div>
+
+    <!-- interactive area: suggestions + hidden input -->
+    <div class="mb-3">
+      <div class="d-flex flex-wrap gap-2 mb-3" id="suggestionArea"></div>
+      <div class="d-flex gap-2 flex-wrap align-items-center">
+        <input type="text" id="userEdit" class="form-control rounded-pill" style="flex:2;" placeholder="type a word or phrase...">
+        <button id="applyBtn" class="btn rounded-pill px-4" style="background:#1f3e48; color:white;">try</button>
+        <button id="nextSentenceBtn" class="btn btn-outline-magic"><i class="bi bi-arrow-repeat"></i> new</button>
+      </div>
+    </div>
+
+    <!-- feedback area (gentle, magical) -->
+    <div id="feedbackMsg" class="feedback-bubble mt-3">
+      💡 tap any word in the sentence, or slide depth, or type a new word.
+    </div>
+
+    <!-- tiny stats: invisible mastery -->
+    <div class="d-flex justify-content-between mt-4 small text-secondary">
+      <div><i class="bi bi-droplet-half"></i> <span id="exploreCount">0</span> explorations</div>
+      <div id="depthHint">🌱 glue mode · try connectors</div>
+    </div>
+  </div>
+  <footer class="text-center text-secondary small">
+    <i class="bi bi-box-seam"></i> same roots · silent rules · the engine listens
+  </footer>
+</div>
+
+<script>
+  // ----------------------------------------------
+  //  C O R E   E N G I N E   (JSON embedded)
+  // ----------------------------------------------
+  const ENGINE = {
+    version: "1.0",
+    roots: {
+      functional: ["the","a","an","and","of","to","in","for","on","with","by","at","from","up","down","out","off","over","under","back","away","through","about","across","along","around","into","without","but","or","so","as","than","then","now","when","where","why","how","if","because","though","while","during","within","between","against","per","very","just"],
+      verbs: ["be","have","do","say","get","make","go","take","come","see","think","look","want","give","use","find","tell","ask","work","seem","feel","try","leave","call","need","become","put","keep","let","begin","show","hear","run","move","live","believe","hold","bring","happen","write","sit","stand","lose","pay","meet","include","continue","set","learn","change","love","hate","start","stop","help","care","hope","kill","die","grow","turn","play","read","speak","listen","watch","walk","break","open","close","build","win","fail","choose","forget","remember","understand","follow","lead","wait"],
+      nouns: ["time","year","people","way","day","man","woman","child","life","world","house","place","work","week","hand","eye","head","door","room","friend","mother","father","water","food","word","name","story","book","money","car"],
+      adjectives: ["good","bad","new","old","young","big","small","long","short","high","low","wide","deep","heavy","light","hard","soft","fast","slow","rich","poor","strong","weak","hot","cold","dark","bright","happy","sad","afraid"],
+      adverbs: ["very","too","so","really","almost","never","always","sometimes","well","together"]
+    },
+    patterns: {
+      verb_to_noun_er: (v) => v + "er",
+      verb_to_adj_ing: (v) => v + "ing",
+      verb_to_adj_ed: (v) => v + "ed",
+      noun_to_adj_ful: (n) => n + "ful",
+      noun_to_adj_less: (n) => n + "less",
+      adj_to_adv_ly: (a) => a + "ly",
+      adj_to_noun_ness: (a) => a + "ness",
+      prefix_un: (w) => "un" + w,
+      prefix_re: (w) => "re" + w
+    },
+    phrasalPairs: [
+      {verb:"get", particles:["up","out","off","over","back","through","down","away"]},
+      {verb:"take", particles:["off","out","over","back"]},
+      {verb:"come", particles:["back","over","out","through"]},
+      {verb:"give", particles:["up","out","back"]},
+      {verb:"run", particles:["out","into","over"]},
+      {verb:"turn", particles:["on","off","up","down"]},
+      {verb:"hold", particles:["on","back","onto"]},
+      {verb:"carry", particles:["on"]},
+      {verb:"break", particles:["down","up"]}
+    ],
+    sentences: [
+      "The woman goes to work.",
+      "The young man loves his job.",
+      "She wakes up early every day.",
+      "He cares for his old mother.",
+      "They live in a small house near the water.",
+      "The child feels afraid of the dark.",
+      "We need to find a better way.",
+      "I hold onto hope because I am strong.",
+      "You should turn off the light before sleep.",
+      "My friend gives up too easily."
+    ]
+  };
+
+  // Helper: check if a word is a root or valid derivative (affix / phrasal)
+  function isValidTransformation(word, currentDepth) {
+    const low = word.toLowerCase();
+    // 1. root check
+    const allRoots = [...ENGINE.roots.functional, ...ENGINE.roots.verbs, ...ENGINE.roots.nouns, ...ENGINE.roots.adjectives, ...ENGINE.roots.adverbs];
+    if (allRoots.includes(low)) return true;
+
+    // 2. affix rules (depth 4)
+    if (currentDepth === 4) {
+      if (low.endsWith("ly") && allRoots.includes(low.slice(0,-2))) return true;
+      if (low.startsWith("un") && allRoots.includes(low.slice(2))) return true;
+      if (low.endsWith("ness") && allRoots.includes(low.slice(0,-4))) return true;
+      if (low.endsWith("er") && ENGINE.roots.verbs.includes(low.slice(0,-2))) return true;
+      if (low.endsWith("ful") && ENGINE.roots.nouns.includes(low.slice(0,-3))) return true;
+      if (low.endsWith("less") && ENGINE.roots.nouns.includes(low.slice(0,-4))) return true;
+    }
+
+    // 3. phrasal verbs (depth 3)
+    if (currentDepth === 3 && low.includes(" ")) {
+      const [v, p] = low.split(" ");
+      const match = ENGINE.phrasalPairs.find(pair => pair.verb === v && pair.particles.includes(p));
+      if (match) return true;
+    }
+    return false;
+  }
+
+  // get suggestions based on current sentence + depth
+  function getSuggestions(sentenceText, depth) {
+    const words = sentenceText.split(/\s+/);
+    const suggestions = new Set();
+    if (depth === 1) {
+      // glue: functional connectors
+      ENGINE.roots.functional.slice(0,12).forEach(f => suggestions.add(f));
+    } else if (depth === 2) {
+      // core: verbs and common nouns
+      ENGINE.roots.verbs.slice(0,12).forEach(v => suggestions.add(v));
+      ENGINE.roots.nouns.slice(0,8).forEach(n => suggestions.add(n));
+      suggestions.add("young"); suggestions.add("good");
+    } else if (depth === 3) {
+      // phrasal suggestions from current verb in sentence
+      for (let pair of ENGINE.phrasalPairs) {
+        if (sentenceText.includes(pair.verb)) {
+          pair.particles.forEach(p => suggestions.add(`${pair.verb} ${p}`));
+        }
+      }
+      if (suggestions.size === 0) suggestions.add("get up");
+    } else if (depth === 4) {
+      // affix: take last adjective or noun from sentence
+      const lastAdj = ENGINE.roots.adjectives.find(adj => sentenceText.includes(adj));
+      if (lastAdj) {
+        suggestions.add(`${lastAdj}ly`);
+        suggestions.add(`un${lastAdj}`);
+        suggestions.add(`${lastAdj}ness`);
+      } else {
+        suggestions.add("happily"); suggestions.add("unhappy"); suggestions.add("darkness");
+      }
+    }
+    return Array.from(suggestions).slice(0,6);
+  }
+
+  // replace a word in sentence at caret or first occurrence
+  let currentSentence = "The woman goes to work.";
+  let currentDepth = 1;        // 1=glue,2=core,3=phrasal,4=affix
+  let explorationCount = 0;
+  let lastActionFeedback = "";
+
+  function updateUI() {
+    document.getElementById("sentenceDisplay").innerHTML = currentSentence;
+    const suggestions = getSuggestions(currentSentence, currentDepth);
+    const suggestionDiv = document.getElementById("suggestionArea");
+    suggestionDiv.innerHTML = "";
+    suggestions.slice(0,5).forEach(sug => {
+      const chip = document.createElement("span");
+      chip.className = "suggestion-chip";
+      chip.innerText = sug;
+      chip.addEventListener("click", () => {
+        document.getElementById("userEdit").value = sug;
+        applyTransformation(sug);
+      });
+      suggestionDiv.appendChild(chip);
+    });
+    document.getElementById("exploreCount").innerText = explorationCount;
+    let depthHintText = "";
+    if (currentDepth === 1) depthHintText = "🌱 glue mode · try connectors: because, but, and, so, if";
+    else if (currentDepth === 2) depthHintText = "📦 core mode · swap verbs/nouns: love, work, man, woman";
+    else if (currentDepth === 3) depthHintText = "🌀 phrasal mode · verb+particle: get up, turn off, hold on";
+    else depthHintText = "✨ affix mode · build words: happily, redo, careful, darkness";
+    document.getElementById("depthHint").innerHTML = depthHintText;
+  }
+
+  function applyTransformation(newWordRaw) {
+    let newWord = newWordRaw.trim().toLowerCase();
+    if (!newWord) return;
+    // basic validation respecting depth
+    if (!isValidTransformation(newWord, currentDepth)) {
+      document.getElementById("feedbackMsg").innerHTML = `✨ “${newWord}” doesn't fit this depth yet. try a suggestion or slide depth.`;
+      return;
+    }
+    // smart replacement: replace first verb/ noun / functional based on depth
+    let words = currentSentence.split(/\s+/);
+    let replaced = false;
+    if (currentDepth === 1) {
+      // insert functional word before main verb or at logical position
+      for (let i=0; i<words.length; i++) {
+        if (ENGINE.roots.verbs.includes(words[i].toLowerCase().replace(/[^a-z]/g, ''))) {
+          words.splice(i, 0, newWord);
+          replaced = true;
+          break;
+        }
+      }
+      if (!replaced) words.push(newWord);
+    } 
+    else if (currentDepth === 2) {
+      // replace a verb or noun
+      for (let i=0; i<words.length; i++) {
+        let clean = words[i].toLowerCase().replace(/[^a-z]/g, '');
+        if (ENGINE.roots.verbs.includes(clean) || ENGINE.roots.nouns.includes(clean)) {
+          words[i] = newWord;
+          replaced = true;
+          break;
+        }
+      }
+      if (!replaced && words.length > 2) words[1] = newWord;
+    }
+    else if (currentDepth === 3) {
+      // replace a simple verb with phrasal verb (two words)
+      let joined = words.join(" ");
+      let foundVerb = false;
+      for (let pair of ENGINE.phrasalPairs) {
+        if (joined.includes(pair.verb) && !joined.includes(pair.verb + " ")) {
+          joined = joined.replace(new RegExp(`\\b${pair.verb}\\b`), newWord);
+          foundVerb = true;
+          break;
+        }
+      }
+      if (!foundVerb) joined = joined.replace(/\b(go|get|take|come|run|turn|hold|carry|break)\b/, newWord);
+      currentSentence = joined;
+      updateUI();
+      explorationCount++;
+      document.getElementById("feedbackMsg").innerHTML = `🎯 “${newWord}” works. same sentence, deeper meaning.`;
+      return;
+    }
+    else if (currentDepth === 4) {
+      // replace an adjective or noun with affixed version
+      for (let i=0; i<words.length; i++) {
+        let clean = words[i].toLowerCase().replace(/[^a-z]/g, '');
+        if (ENGINE.roots.adjectives.includes(clean) || ENGINE.roots.nouns.includes(clean)) {
+          words[i] = newWord;
+          replaced = true;
+          break;
+        }
+      }
+      if (!replaced && words.length > 0) words[words.length-1] = newWord;
+    }
+    if (currentDepth !== 3) {
+      currentSentence = words.join(" ");
+    }
+    // final polish: capitalize first letter
+    currentSentence = currentSentence.charAt(0).toUpperCase() + currentSentence.slice(1);
+    explorationCount++;
+    updateUI();
+    document.getElementById("feedbackMsg").innerHTML = `✓ “${newWord}” works. keep exploring — the engine adapts.`;
+    document.getElementById("userEdit").value = "";
+  }
+
+  // interactive sentence: word tapping
+  function setupWordTap() {
+    const sentenceDiv = document.getElementById("sentenceDisplay");
+    sentenceDiv.addEventListener("click", (e) => {
+      let targetWord = "";
+      if (e.target && e.target.nodeType === 1) {
+        targetWord = e.target.innerText || "";
+      } else {
+        const selection = window.getSelection().toString().trim();
+        if (selection) targetWord = selection;
+      }
+      if (targetWord && targetWord.length > 0) {
+        document.getElementById("userEdit").value = targetWord;
+        document.getElementById("feedbackMsg").innerHTML = `✏️ replace “${targetWord}” with something new. (depth ${currentDepth})`;
+      }
+    });
+  }
+
+  // depth change
+  function setDepth(depth) {
+    currentDepth = depth;
+    document.querySelectorAll('.depth-option').forEach(opt => {
+      opt.classList.remove('active-depth');
+      if (parseInt(opt.getAttribute('data-depth')) === depth) opt.classList.add('active-depth');
+    });
+    updateUI();
+    document.getElementById("feedbackMsg").innerHTML = `🌀 depth changed → ${depth === 1 ? 'glue mode' : depth === 2 ? 'core mode' : depth === 3 ? 'phrasal mode' : 'affix mode'}. try filling the sentence.`;
+    document.getElementById("userEdit").value = "";
+  }
+
+  // load random sentence from corpus
+  function loadRandomSentence() {
+    const randomIndex = Math.floor(Math.random() * ENGINE.sentences.length);
+    currentSentence = ENGINE.sentences[randomIndex];
+    explorationCount = Math.max(0, explorationCount - 2);
+    updateUI();
+    document.getElementById("feedbackMsg").innerHTML = `✨ new sentence. same rules. slide depth and play.`;
+    document.getElementById("userEdit").value = "";
+  }
+
+  // initial event listeners
+  document.getElementById("applyBtn").addEventListener("click", () => {
+    const val = document.getElementById("userEdit").value;
+    if (val) applyTransformation(val);
+    else document.getElementById("feedbackMsg").innerHTML = `✏️ type a word or tap a suggestion.`;
+  });
+  document.getElementById("nextSentenceBtn").addEventListener("click", loadRandomSentence);
+  document.querySelectorAll(".depth-option").forEach(opt => {
+    opt.addEventListener("click", () => setDepth(parseInt(opt.getAttribute("data-depth"))));
+  });
+  document.getElementById("userEdit").addEventListener("keypress", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const val = document.getElementById("userEdit").value;
+      if (val) applyTransformation(val);
+    }
+  });
+
+  // bootstrap engine
+  function init() {
+    currentSentence = ENGINE.sentences[0];
+    currentDepth = 1;
+    explorationCount = 0;
+    updateUI();
+    setupWordTap();
+  }
+  init();
+</script>
+</body>
+</html>

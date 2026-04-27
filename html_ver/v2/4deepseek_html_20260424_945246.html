@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>CoreLang · alive</title>
+  <!-- Bootstrap 5 minimal + icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <style>
+    body {
+      background: #f7f9fc;
+      font-family: system-ui, -apple-system, 'Segoe UI', 'Inter', 'Helvetica Neue', sans-serif;
+    }
+    /* alive animations */
+    @keyframes gentlePulse {
+      0% { transform: scale(1); background: #fff9e8; border-color: #f5b042; }
+      50% { transform: scale(1.01); background: #fff3d1; border-color: #e67e22; }
+      100% { transform: scale(1); background: #fff9e8; border-color: #f5b042; }
+    }
+    @keyframes particleWiggle {
+      0% { transform: translateX(0px); }
+      25% { transform: translateX(3px); }
+      75% { transform: translateX(-3px); }
+      100% { transform: translateX(0px); }
+    }
+    @keyframes softGlow {
+      0% { text-shadow: 0 0 0px rgba(46, 125, 50, 0); }
+      100% { text-shadow: 0 0 6px rgba(46, 125, 50, 0.4); }
+    }
+    .engine-card {
+      border: none;
+      border-radius: 2.5rem;
+      background: rgba(255,255,255,0.98);
+      box-shadow: 0 20px 35px -12px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.01);
+      transition: all 0.2s;
+    }
+    .sentence-core {
+      font-size: 1.9rem;
+      font-weight: 560;
+      background: #ffffff;
+      border-radius: 2rem;
+      padding: 1.2rem 1rem;
+      line-height: 1.4;
+      border: 1px solid #eef2f8;
+      transition: 0.1s;
+    }
+    .blank-highlight {
+      display: inline-block;
+      min-width: 110px;
+      background: #fff2e0;
+      border-radius: 48px;
+      padding: 0 0.4rem;
+      color: #c75100;
+      font-weight: 600;
+      border-bottom: 2px dotted #f5b042;
+      cursor: pointer;
+      transition: 0.1s;
+    }
+    .depth-slider-container {
+      background: #f1f5f9;
+      border-radius: 60px;
+      padding: 0.2rem;
+    }
+    .depth-option {
+      flex: 1;
+      text-align: center;
+      padding: 0.45rem 0;
+      border-radius: 60px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: 0.1s;
+      color: #5a6e7c;
+    }
+    .depth-option.active-depth {
+      background: #1e3a4d;
+      color: white;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+    .quiet-input {
+      border-radius: 60px;
+      border: 1px solid #e2edf2;
+      background: white;
+      padding: 0.8rem 1.2rem;
+      font-size: 1rem;
+      transition: 0.2s;
+    }
+    .quiet-input:focus {
+      border-color: #f5b042;
+      box-shadow: 0 0 0 3px rgba(245,176,66,0.15);
+      outline: none;
+    }
+    .suggest-chip {
+      background: #ecf3f8;
+      padding: 0.4rem 1.2rem;
+      border-radius: 60px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.1s;
+      border: 1px solid #dce5ec;
+      color: #1f3e48;
+    }
+    .suggest-chip:hover {
+      background: #e0e9f0;
+      transform: scale(0.96);
+    }
+    .feedback-magic {
+      background: #fef9e6;
+      border-radius: 1.5rem;
+      padding: 1rem 1.3rem;
+      border-left: 5px solid #f5b042;
+      transition: 0.15s;
+    }
+    .particle-highlight {
+      animation: particleWiggle 0.2s ease-in-out 0s 2;
+      display: inline-block;
+    }
+    .glow-correct {
+      animation: softGlow 0.3s ease-out;
+    }
+    .btn-magic {
+      background: #f5b042;
+      border: none;
+      border-radius: 60px;
+      padding: 0.5rem 1.6rem;
+      font-weight: 500;
+      color: #2c2a24;
+    }
+    .btn-magic:hover {
+      background: #e69a2e;
+      transform: translateY(-1px);
+    }
+    .discovery-badge {
+      background: #eaf7e6;
+      border-radius: 60px;
+      font-size: 0.7rem;
+      padding: 0.2rem 0.8rem;
+      color: #2b6e3c;
+    }
+    footer {
+      border-top: 1px solid #eef2f9;
+    }
+    @media (max-width: 640px) {
+      .sentence-core { font-size: 1.3rem; }
+    }
+  </style>
+</head>
+<body class="pt-4 pb-5">
+
+<div class="container" style="max-width: 880px;">
+  <div class="text-center mb-3">
+    <h2 class="fw-semibold" style="color: #1f3e48;">same sentence · deeper you</h2>
+    <p class="text-secondary small">slide the depth → blanks change. try things. the engine wakes up.</p>
+  </div>
+
+  <div class="engine-card p-4 p-md-5 mb-4">
+    <!-- Depth slider: silent, no stages jargon -->
+    <div class="depth-slider-container d-flex mb-4">
+      <div data-depth="1" class="depth-option active-depth">🌱 glue</div>
+      <div data-depth="2" class="depth-option">📦 core words</div>
+      <div data-depth="3" class="depth-option">🌀 phrasal flow</div>
+      <div data-depth="4" class="depth-option">✨ word builder</div>
+    </div>
+
+    <!-- animated sentence area -->
+    <div class="sentence-core text-center mb-4" id="sentenceDisplay">
+      I <span class="blank-highlight" id="blankSlot">______</span> to work.
+    </div>
+
+    <!-- input + suggestions -->
+    <div class="mb-3">
+      <input type="text" id="userFill" class="form-control quiet-input" placeholder="type something..." autocomplete="off">
+      <div class="d-flex flex-wrap justify-content-between align-items-center mt-3 gap-2">
+        <div id="suggestionArea" class="d-flex flex-wrap gap-2"></div>
+        <button id="checkBtn" class="btn-magic"><i class="bi bi-magic me-1"></i> try</button>
+      </div>
+    </div>
+
+    <!-- magical feedback area: alive, surprising, warm -->
+    <div id="feedbackMsg" class="feedback-magic small">
+      💡 slide the depth. fill the blank. the engine learns with you.
+    </div>
+    
+    <!-- tiny discovery tracker (feeling, not stats) -->
+    <div class="d-flex justify-content-between align-items-center mt-3">
+      <div id="discoveryMessage" class="discovery-badge">✨ new paths hidden</div>
+      <div class="text-muted small" id="vibeHint">✍️ try swapping the particle</div>
+    </div>
+  </div>
+  <footer class="text-center text-secondary small">
+    <i class="bi bi-brightness-alt-high"></i> no lessons · one sentence · infinite depth
+  </footer>
+</div>
+
+<script>
+  // ---------- THE SAME FIXED SENTENCE SET (but with soul) ----------
+  const sentencesPool = [
+    { 
+      text: "I ___ to work.",
+      slots: {
+        depth1: ["because","but","and","so","if","when","although"],
+        depth2: ["need","want","have","must","can","will","love","hate"],
+        depth3: ["get up","get out","get back","go on","rush out","head out"],
+        depth4: ["happily","quickly","easily","sadly","brightly","willingly"]
+      },
+      surprisePhrasalBase: "get",
+      affixRoot: "happy"
+    },
+    { 
+      text: "She is ___ woman.",
+      slots: {
+        depth1: ["but","and","because","so","yet"],
+        depth2: ["a good","a kind","a young","an old","a strong","a smart"],
+        depth3: ["getting up","breaking out","turning over","standing up"],
+        depth4: ["happy","unhappy","careful","careless","kind","unkind","beautiful"]
+      },
+      surprisePhrasalBase: "break",
+      affixRoot: "care"
+    },
+    { 
+      text: "Please ___ the light.",
+      slots: {
+        depth1: ["and","but","because","so","then"],
+        depth2: ["turn off","turn on","fix","check","adjust"],
+        depth3: ["turn off","turn on","shut off","put on","switch off"],
+        depth4: ["gently","quickly","silently","automatically","carefully"]
+      },
+      surprisePhrasalBase: "turn",
+      affixRoot: "gentle"
+    },
+    { 
+      text: "They ___ the door.",
+      slots: {
+        depth1: ["and","but","so","because","then"],
+        depth2: ["open","close","lock","break","paint","push"],
+        depth3: ["break through","lock away","open up","close down","pull open"],
+        depth4: ["noisily","suddenly","carefully","angrily","softly"]
+      },
+      surprisePhrasalBase: "break",
+      affixRoot: "careful"
+    },
+    { 
+      text: "We need to ___ early.",
+      slots: {
+        depth1: ["because","so","if","when","although"],
+        depth2: ["wake","leave","arrive","start","begin"],
+        depth3: ["wake up","get up","set off","head out","start off"],
+        depth4: ["really","absolutely","barely","almost","quite"]
+      },
+      surprisePhrasalBase: "get",
+      affixRoot: "absolute"
+    }
+  ];
+
+  let currentSentence = null;
+  let currentDepth = 1;      // 1=glue, 2=core, 3=phrasal, 4=affix
+  let lastDiscovery = null;
+  let discoveryCount = 0;
+  let sessionExploration = [];
+
+  // helper: pick random sentence
+  function pickRandomSentence() {
+    const idx = Math.floor(Math.random() * sentencesPool.length);
+    currentSentence = { ...sentencesPool[idx] };
+    return currentSentence;
+  }
+
+  // get allowed answers for current depth
+  function getAllowedForDepth(depth, sentence) {
+    if (depth === 1) return sentence.slots.depth1 || ["because","but","and","so","if"];
+    if (depth === 2) return sentence.slots.depth2 || ["need","want","have","go"];
+    if (depth === 3) return sentence.slots.depth3 || ["get up","turn off","wake up"];
+    if (depth === 4) return sentence.slots.depth4 || ["happily","quickly","sadly"];
+    return [];
+  }
+
+  // render sentence with interactive blank
+  function renderSentence() {
+    const blankSpan = document.getElementById("blankSlot");
+    let depthHint = "";
+    if (currentDepth === 1) depthHint = "…";
+    else if (currentDepth === 2) depthHint = "____";
+    else if (currentDepth === 3) depthHint = "———";
+    else depthHint = "✨";
+    blankSpan.innerText = depthHint;
+    blankSpan.setAttribute("data-depth", currentDepth);
+    const fullText = currentSentence.text.replace("___", `<span class="blank-highlight" id="blankSlot">${depthHint}</span>`);
+    document.getElementById("sentenceDisplay").innerHTML = fullText;
+    // reattach event (optional)
+    const newBlank = document.getElementById("blankSlot");
+    if (newBlank) {
+      newBlank.style.cursor = "pointer";
+      newBlank.addEventListener("click", () => {
+        document.getElementById("userFill").focus();
+      });
+    }
+  }
+
+  // update suggestions based on depth
+  function updateSuggestions() {
+    const allowed = getAllowedForDepth(currentDepth, currentSentence);
+    const container = document.getElementById("suggestionArea");
+    container.innerHTML = "";
+    const shortList = [...new Set(allowed)].slice(0, 4);
+    shortList.forEach(opt => {
+      const chip = document.createElement("span");
+      chip.className = "suggest-chip";
+      chip.innerText = opt;
+      chip.addEventListener("click", () => {
+        document.getElementById("userFill").value = opt;
+        // subtle wiggle on suggestion click (delight)
+        chip.style.transform = "scale(0.96)";
+        setTimeout(() => { chip.style.transform = ""; }, 100);
+      });
+      container.appendChild(chip);
+    });
+    // update vibe hint
+    const vibeMap = {1:"try linking words: because, but...", 2:"add a verb or noun", 3:"swap the particle → get up / get out", 4:"add un-, -ly, -ness"};
+    document.getElementById("vibeHint").innerHTML = `✨ ${vibeMap[currentDepth] || "explore freely"}`;
+  }
+
+  // check validity + surprise discovery
+  function validateAnswer(userAnswer) {
+    const allowed = getAllowedForDepth(currentDepth, currentSentence);
+    const lowerAnswer = userAnswer.trim().toLowerCase();
+    if (allowed.map(a => a.toLowerCase()).includes(lowerAnswer)) return { ok: true, reason: "exact" };
+    
+    // DEPTH 3: particle sweep magic (get up, get out, get over ...)
+    if (currentDepth === 3 && currentSentence.surprisePhrasalBase) {
+      const base = currentSentence.surprisePhrasalBase;
+      if (lowerAnswer.startsWith(base + " ") || lowerAnswer.includes(" ")) {
+        const particle = lowerAnswer.split(" ")[1];
+        const validParticles = ["up","out","off","over","back","through","down","away","in","on"];
+        if (validParticles.includes(particle)) {
+          return { ok: true, reason: "phrasal_sweep", particle: particle };
+        }
+      }
+    }
+    
+    // DEPTH 4: affix magic (un+happy, happy+ness, care+less, re+do)
+    if (currentDepth === 4) {
+      const root = currentSentence.affixRoot;
+      if (lowerAnswer === `un${root}`) return { ok: true, reason: "affix_un", affixType: "un-" };
+      if (lowerAnswer === `${root}ness`) return { ok: true, reason: "affix_ness", affixType: "-ness" };
+      if (lowerAnswer === `${root}ly`) return { ok: true, reason: "affix_ly", affixType: "-ly" };
+      if (lowerAnswer === `re${root}`) return { ok: true, reason: "affix_re", affixType: "re-" };
+      if (lowerAnswer === `${root}less`) return { ok: true, reason: "affix_less", affixType: "-less" };
+      // dynamic affix from any core adjective
+      if ((lowerAnswer.startsWith("un") && allowed.some(w => w === lowerAnswer.slice(2))) ||
+          (lowerAnswer.endsWith("ly") && allowed.some(w => w === lowerAnswer.slice(0,-2)))) {
+        return { ok: true, reason: "affix_dynamic" };
+      }
+    }
+    return { ok: false };
+  }
+
+  // magical feedback & animations
+  function showMagicFeedback(answer, validation) {
+    const feedbackDiv = document.getElementById("feedbackMsg");
+    const discoveryDiv = document.getElementById("discoveryMessage");
+    let msg = "";
+    let isDiscovery = false;
+    let discoveryText = "";
+    
+    if (validation.ok) {
+      // particle wiggle animation for depth 3
+      if (currentDepth === 3 && validation.reason === "phrasal_sweep") {
+        msg = `🎉 “${answer}” — you just swept the particle! “${validation.particle}” changes the meaning. try another one.`;
+        isDiscovery = true;
+        discoveryText = `🌀 discovered: phrasal sweep → ${answer}`;
+        animateParticle();
+      } 
+      else if (currentDepth === 4 && (validation.reason === "affix_un" || validation.reason === "affix_ness" || validation.reason === "affix_ly" || validation.reason === "affix_re")) {
+        msg = `✨ wow. “${answer}” is a real word — you built it from a root + affix. that’s how language grows.`;
+        isDiscovery = true;
+        discoveryText = `🔨 affix magic: ${validation.affixType} works!`;
+        triggerGlow();
+      }
+      else if (currentDepth === 4 && validation.reason === "affix_dynamic") {
+        msg = `🌟 “${answer}” works. affixes are your superpower now. keep exploring.`;
+        isDiscovery = true;
+        discoveryText = `⚡ generative word!`;
+        triggerGlow();
+      }
+      else {
+        msg = `✓ “${answer}” fits perfectly. the sentence breathes. try sliding depth →`;
+        if (currentDepth === 1) msg += ` next, try “core words”.`;
+        if (currentDepth === 2) msg += ` feel the structure? go deeper → phrasal flow.`;
+      }
+      if (!isDiscovery && (currentDepth === 3 || currentDepth === 4)) {
+        msg += ` 🔄 same sentence, new dimension.`;
+      }
+      sessionExploration.push(answer);
+      if (sessionExploration.length % 3 === 0 && !isDiscovery) {
+        discoveryText = `💡 tip: try a different particle (up/out/off) or affix (un-/ -ly)`;
+        discoveryDiv.innerHTML = `✨ ${discoveryText}`;
+        setTimeout(() => { if(discoveryDiv) discoveryDiv.innerHTML = `🔮 depth level ${currentDepth} · keep going`; }, 2500);
+      } else if(isDiscovery){
+        discoveryDiv.innerHTML = `🎁 ${discoveryText}`;
+        setTimeout(() => { if(discoveryDiv) discoveryDiv.innerHTML = `✨ new paths hidden`; }, 3000);
+      } else {
+        discoveryDiv.innerHTML = `✨ smooth · try something unexpected`;
+        setTimeout(() => { if(discoveryDiv) discoveryDiv.innerHTML = `✨ new paths hidden`; }, 2000);
+      }
+      // auto change sentence after 3 successful? but keep fresh: load new sentence after good answer (refresh)
+      pickRandomSentence();
+      renderSentence();
+      updateSuggestions();
+    } 
+    else {
+      msg = `🌱 “${answer}” doesn’t fit this blank right now. peek at suggestions → or slide depth.`;
+      feedbackDiv.style.background = "#fff4f0";
+      setTimeout(() => { feedbackDiv.style.background = "#fef9e6"; }, 400);
+    }
+    feedbackDiv.innerHTML = `💬 ${msg}`;
+    if (validation.ok) {
+      document.getElementById("userFill").value = "";
+      // also add subtle glow to blank
+      const blank = document.getElementById("blankSlot");
+      if(blank) blank.classList.add("glow-correct");
+      setTimeout(() => { if(blank) blank.classList.remove("glow-correct"); }, 400);
+    }
+  }
+
+  function animateParticle() {
+    const blankSpan = document.getElementById("blankSlot");
+    if (blankSpan) blankSpan.classList.add("particle-highlight");
+    setTimeout(() => { if(blankSpan) blankSpan.classList.remove("particle-highlight"); }, 500);
+  }
+
+  function triggerGlow() {
+    const sentenceDiv = document.getElementById("sentenceDisplay");
+    sentenceDiv.style.transition = "0.1s";
+    sentenceDiv.style.background = "#fff7e8";
+    setTimeout(() => { sentenceDiv.style.background = "#ffffff"; }, 400);
+  }
+
+  function handleTry() {
+    const rawAnswer = document.getElementById("userFill").value;
+    if (!rawAnswer.trim()) {
+      document.getElementById("feedbackMsg").innerHTML = `💡 type something — anything. the engine responds.`;
+      return;
+    }
+    const validation = validateAnswer(rawAnswer);
+    showMagicFeedback(rawAnswer, validation);
+  }
+
+  // depth slider logic (no stage jargon, just depth)
+  function setDepth(depth) {
+    currentDepth = depth;
+    document.querySelectorAll('.depth-option').forEach(opt => {
+      opt.classList.remove('active-depth');
+      if (parseInt(opt.getAttribute('data-depth')) === depth) {
+        opt.classList.add('active-depth');
+      }
+    });
+    renderSentence();
+    updateSuggestions();
+    document.getElementById("userFill").value = "";
+    let depthMessage = "";
+    if (depth === 1) depthMessage = "glue mode: conjunctions & connectors";
+    else if (depth === 2) depthMessage = "core mode: verbs, nouns, subjects";
+    else if (depth === 3) depthMessage = "phrasal mode: swap particles → new meanings";
+    else depthMessage = "affix mode: build words with un-, -ly, -ness";
+    document.getElementById("feedbackMsg").innerHTML = `🌀 ${depthMessage}. same sentence, new blank.`;
+    const discoveryDiv = document.getElementById("discoveryMessage");
+    discoveryDiv.innerHTML = `✨ depth ${depth} · explore freely`;
+    setTimeout(() => { if(discoveryDiv && discoveryDiv.innerHTML.includes("depth")) discoveryDiv.innerHTML = `✨ new paths hidden`; }, 2500);
+  }
+
+  // attach event handlers
+  function init() {
+    pickRandomSentence();
+    renderSentence();
+    updateSuggestions();
+    document.getElementById("checkBtn").addEventListener("click", handleTry);
+    document.querySelectorAll(".depth-option").forEach(opt => {
+      opt.addEventListener("click", (e) => {
+        const depthVal = parseInt(opt.getAttribute("data-depth"), 10);
+        setDepth(depthVal);
+      });
+    });
+    document.getElementById("userFill").addEventListener("keypress", (e) => {
+      if (e.key === "Enter") handleTry();
+    });
+    // initial random magic
+    setDepth(1);
+  }
+  init();
+</script>
+</body>
+</html>

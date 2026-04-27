@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activation Engine — Swooping Prototype</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .card-swoop {
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .sentence-display {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            font-size: 1.6rem;
+            font-weight: 500;
+            text-align: center;
+            border-left: 5px solid #667eea;
+            transition: all 0.3s ease;
+        }
+        .slot-badge {
+            background: #667eea;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            display: inline-block;
+        }
+        .btn-swoop {
+            margin: 5px;
+        }
+        .swoop-history {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .history-item {
+            font-size: 0.9rem;
+            padding: 8px;
+            border-bottom: 1px solid #e0e0e0;
+            font-family: monospace;
+        }
+        .swapping-animation {
+            animation: pulse 0.3s ease;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); background-color: #e0e7ff; }
+            50% { transform: scale(1.02); background-color: #c7d2fe; }
+            100% { transform: scale(1); background-color: #f8f9fa; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                
+                <!-- Header -->
+                <div class="text-center text-white mb-4">
+                    <h1 class="display-4 fw-bold">
+                        <i class="fas fa-exchange-alt me-2"></i>Swooping Lab
+                    </h1>
+                    <p class="lead">One skeleton. Infinite possibilities.</p>
+                </div>
+
+                <!-- Main Card -->
+                <div class="card card-swoop">
+                    <div class="card-header bg-dark text-white py-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-code-branch me-2"></i>Sentence Skeleton</span>
+                            <span class="badge bg-primary">Day 1 Prototype</span>
+                        </div>
+                    </div>
+                    
+                    <div class="card-body p-4">
+                        
+                        <!-- The Sentence Display -->
+                        <div class="mb-4">
+                            <div class="slot-badge">
+                                <i class="fas fa-magic me-1"></i> Current Sentence
+                            </div>
+                            <div id="sentenceDisplay" class="sentence-display">
+                                The young woman goes to work happily.
+                            </div>
+                        </div>
+
+                        <!-- Swooping Controls -->
+                        <div class="row g-4">
+                            
+                            <!-- Functional Word Slot (the/a) -->
+                            <div class="col-md-6">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h6 class="card-title">
+                                            <i class="fas fa-tag text-primary me-1"></i> 
+                                            Functional Word
+                                        </h6>
+                                        <div class="d-flex flex-wrap gap-2 mt-2" id="functionalGroup">
+                                            <button class="btn btn-outline-primary btn-sm swoop-btn" data-slot="functional" data-value="The">The</button>
+                                            <button class="btn btn-outline-primary btn-sm swoop-btn" data-slot="functional" data-value="A">A</button>
+                                            <button class="btn btn-outline-primary btn-sm swoop-btn" data-slot="functional" data-value="This">This</button>
+                                            <button class="btn btn-outline-primary btn-sm swoop-btn" data-slot="functional" data-value="That">That</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Noun Slot -->
+                            <div class="col-md-6">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h6 class="card-title">
+                                            <i class="fas fa-user text-success me-1"></i> 
+                                            Noun
+                                        </h6>
+                                        <div class="d-flex flex-wrap gap-2 mt-2" id="nounGroup">
+                                            <button class="btn btn-outline-success btn-sm swoop-btn" data-slot="noun" data-value="woman">woman</button>
+                                            <button class="btn btn-outline-success btn-sm swoop-btn" data-slot="noun" data-value="man">man</button>
+                                            <button class="btn btn-outline-success btn-sm swoop-btn" data-slot="noun" data-value="child">child</button>
+                                            <button class="btn btn-outline-success btn-sm swoop-btn" data-slot="noun" data-value="dog">dog</button>
+                                            <button class="btn btn-outline-success btn-sm swoop-btn" data-slot="noun" data-value="bird">bird</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Adjective Slot -->
+                            <div class="col-md-6">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h6 class="card-title">
+                                            <i class="fas fa-palette text-warning me-1"></i> 
+                                            Adjective
+                                        </h6>
+                                        <div class="d-flex flex-wrap gap-2 mt-2" id="adjectiveGroup">
+                                            <button class="btn btn-outline-warning btn-sm swoop-btn" data-slot="adjective" data-value="young">young</button>
+                                            <button class="btn btn-outline-warning btn-sm swoop-btn" data-slot="adjective" data-value="old">old</button>
+                                            <button class="btn btn-outline-warning btn-sm swoop-btn" data-slot="adjective" data-value="tired">tired</button>
+                                            <button class="btn btn-outline-warning btn-sm swoop-btn" data-slot="adjective" data-value="happy">happy</button>
+                                            <button class="btn btn-outline-warning btn-sm swoop-btn" data-slot="adjective" data-value="sad">sad</button>
+                                            <button class="btn btn-outline-secondary btn-sm swoop-btn" data-slot="adjective" data-value="">(none)</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Verb (with phrasal option) Slot -->
+                            <div class="col-md-6">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h6 class="card-title">
+                                            <i class="fas fa-running text-danger me-1"></i> 
+                                            Verb / Phrasal Verb
+                                        </h6>
+                                        <div class="d-flex flex-wrap gap-2 mt-2" id="verbGroup">
+                                            <button class="btn btn-outline-danger btn-sm swoop-btn" data-slot="verb" data-value="goes">goes</button>
+                                            <button class="btn btn-outline-danger btn-sm swoop-btn" data-slot="verb" data-value="walks">walks</button>
+                                            <button class="btn btn-outline-danger btn-sm swoop-btn" data-slot="verb" data-value="runs">runs</button>
+                                            <button class="btn btn-outline-danger btn-sm swoop-btn" data-slot="verb" data-value="drives">drives</button>
+                                            <!-- Phrasal verbs -->
+                                            <button class="btn btn-outline-danger btn-sm swoop-btn" data-slot="verb" data-value="goes out">goes out</button>
+                                            <button class="btn btn-outline-danger btn-sm swoop-btn" data-slot="verb" data-value="gets up">gets up</button>
+                                            <button class="btn btn-outline-danger btn-sm swoop-btn" data-slot="verb" data-value="heads out">heads out</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Adverb Slot -->
+                            <div class="col-12">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h6 class="card-title">
+                                            <i class="fas fa-dove text-info me-1"></i> 
+                                            Adverb
+                                        </h6>
+                                        <div class="d-flex flex-wrap gap-2 mt-2" id="adverbGroup">
+                                            <button class="btn btn-outline-info btn-sm swoop-btn" data-slot="adverb" data-value="happily">happily</button>
+                                            <button class="btn btn-outline-info btn-sm swoop-btn" data-slot="adverb" data-value="quickly">quickly</button>
+                                            <button class="btn btn-outline-info btn-sm swoop-btn" data-slot="adverb" data-value="slowly">slowly</button>
+                                            <button class="btn btn-outline-info btn-sm swoop-btn" data-slot="adverb" data-value="eagerly">eagerly</button>
+                                            <button class="btn btn-outline-secondary btn-sm swoop-btn" data-slot="adverb" data-value="">(none)</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Reset Button -->
+                        <div class="text-center mt-4">
+                            <button class="btn btn-dark" id="resetBtn">
+                                <i class="fas fa-undo-alt me-2"></i>Reset to Default
+                            </button>
+                        </div>
+
+                        <!-- Swoop History -->
+                        <div class="mt-4">
+                            <div class="slot-badge bg-secondary">
+                                <i class="fas fa-history me-1"></i> Swoop History
+                            </div>
+                            <div id="historyList" class="swoop-history border rounded p-2 bg-light">
+                                <div class="history-item text-muted">Click any button to see sentence change...</div>
+                            </div>
+                            <button class="btn btn-sm btn-link mt-2" id="clearHistoryBtn">
+                                <i class="fas fa-trash-alt me-1"></i>Clear history
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Explanation -->
+                <div class="text-center text-white-50 mt-4 small">
+                    <i class="fas fa-gem me-1"></i> One skeleton. Swap any part. Watch the sentence transform.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Current sentence parts
+        let currentParts = {
+            functional: "The",
+            noun: "woman",
+            adjective: "young",
+            verb: "goes",
+            adverb: "happily"
+        };
+
+        // History array
+        let history = [];
+
+        // Function to build sentence from parts
+        function buildSentence(parts) {
+            let sentence = "";
+            
+            // Add functional word
+            sentence += parts.functional + " ";
+            
+            // Add adjective if present
+            if (parts.adjective && parts.adjective !== "") {
+                sentence += parts.adjective + " ";
+            }
+            
+            // Add noun
+            sentence += parts.noun + " ";
+            
+            // Add verb
+            sentence += parts.verb + " ";
+            
+            // Add "to work"
+            sentence += "to work ";
+            
+            // Add adverb if present
+            if (parts.adverb && parts.adverb !== "") {
+                sentence += parts.adverb;
+            } else {
+                sentence = sentence.trim();
+            }
+            
+            return sentence.trim();
+        }
+
+        // Update the display
+        function updateDisplay(partChanged, oldValue, newValue) {
+            const sentence = buildSentence(currentParts);
+            const displayDiv = document.getElementById('sentenceDisplay');
+            
+            // Add animation
+            displayDiv.classList.add('swapping-animation');
+            setTimeout(() => {
+                displayDiv.classList.remove('swapping-animation');
+            }, 300);
+            
+            displayDiv.textContent = sentence;
+            
+            // Add to history
+            if (oldValue !== undefined && newValue !== undefined) {
+                addToHistory(partChanged, oldValue, newValue, sentence);
+            }
+        }
+
+        // Add to history
+        function addToHistory(part, oldVal, newVal, sentence) {
+            const historyItem = {
+                timestamp: new Date().toLocaleTimeString(),
+                part: part,
+                change: `${oldVal} → ${newVal}`,
+                sentence: sentence
+            };
+            history.unshift(historyItem);
+            
+            // Keep only last 10 items
+            if (history.length > 10) history.pop();
+            
+            renderHistory();
+        }
+
+        // Render history
+        function renderHistory() {
+            const historyDiv = document.getElementById('historyList');
+            if (history.length === 0) {
+                historyDiv.innerHTML = '<div class="history-item text-muted">Click any button to see sentence change...</div>';
+                return;
+            }
+            
+            historyDiv.innerHTML = history.map(item => `
+                <div class="history-item">
+                    <small class="text-muted">${item.timestamp}</small><br>
+                    <strong>${item.part}:</strong> ${item.change}<br>
+                    <span class="text-primary">→ "${item.sentence}"</span>
+                </div>
+            `).join('');
+        }
+
+        // Handle swoop
+        function handleSwoop(slot, value) {
+            const oldValue = currentParts[slot];
+            if (oldValue === value) return; // No change
+            
+            // Update current parts
+            currentParts[slot] = value;
+            
+            // Update display with history
+            updateDisplay(slot, oldValue, value || "(none)");
+        }
+
+        // Reset to default
+        function resetToDefault() {
+            const oldParts = {...currentParts};
+            currentParts = {
+                functional: "The",
+                noun: "woman",
+                adjective: "young",
+                verb: "goes",
+                adverb: "happily"
+            };
+            
+            // Add reset to history
+            const resetSentence = buildSentence(currentParts);
+            const historyItem = {
+                timestamp: new Date().toLocaleTimeString(),
+                part: "RESET",
+                change: "Reset to default",
+                sentence: resetSentence
+            };
+            history.unshift(historyItem);
+            if (history.length > 10) history.pop();
+            renderHistory();
+            
+            // Update display without double-counting
+            const displayDiv = document.getElementById('sentenceDisplay');
+            displayDiv.classList.add('swapping-animation');
+            setTimeout(() => {
+                displayDiv.classList.remove('swapping-animation');
+            }, 300);
+            displayDiv.textContent = resetSentence;
+        }
+
+        // Clear history
+        function clearHistory() {
+            history = [];
+            renderHistory();
+        }
+
+        // Event listeners for all swoop buttons
+        document.querySelectorAll('.swoop-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const slot = btn.getAttribute('data-slot');
+                const value = btn.getAttribute('data-value');
+                handleSwoop(slot, value);
+            });
+        });
+
+        // Reset button
+        document.getElementById('resetBtn').addEventListener('click', resetToDefault);
+        
+        // Clear history button
+        document.getElementById('clearHistoryBtn').addEventListener('click', clearHistory);
+
+        // Initial display
+        updateDisplay();
+    </script>
+</body>
+</html>

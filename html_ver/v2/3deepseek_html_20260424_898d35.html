@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>CoreLang · Four‑Stage Sweeper</title>
+  <!-- Bootstrap 5 + icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <style>
+    body {
+      background: #eef2f5;
+      font-family: system-ui, 'Segoe UI', 'Inter', sans-serif;
+    }
+    .engine-card {
+      border: none;
+      border-radius: 2rem;
+      background: rgba(255,255,255,0.98);
+      box-shadow: 0 12px 28px rgba(0,0,0,0.03), 0 0 0 1px rgba(0,0,0,0.02);
+      transition: 0.2s;
+    }
+    .stage-badge {
+      background: #ffffffcc;
+      backdrop-filter: blur(4px);
+      border-radius: 60px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+    .stage-active {
+      background: #0f212f;
+      color: white;
+    }
+    .sentence-core {
+      font-size: 1.7rem;
+      font-weight: 550;
+      background: #f9fafb;
+      border-radius: 2rem;
+      padding: 1rem 1.2rem;
+      line-height: 1.4;
+      border: 1px solid #e4e7ec;
+    }
+    .blank-highlight {
+      display: inline-block;
+      min-width: 100px;
+      background: #fff1d6;
+      border-bottom: 3px solid #f5b042;
+      color: #ad5f00;
+      font-weight: 600;
+      padding: 0 0.2rem;
+      border-radius: 12px;
+    }
+    .quiet-input {
+      border-radius: 3rem;
+      border: 1px solid #cfdee9;
+      padding: 0.7rem 1.2rem;
+      font-size: 1rem;
+    }
+    .suggest-chip {
+      background: #eef2ff;
+      padding: 0.35rem 1rem;
+      border-radius: 40px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: 0.1s;
+      border: 1px solid #e0e7ff;
+      display: inline-block;
+    }
+    .suggest-chip:hover {
+      background: #e0e7fa;
+      transform: scale(0.96);
+    }
+    .feedback-area {
+      background: #f4f9fe;
+      border-left: 4px solid #2c5f7a;
+      border-radius: 1.2rem;
+    }
+    .progress-soft {
+      height: 4px;
+      background: #e2e8f0;
+      border-radius: 10px;
+    }
+    .silent-bar {
+      background: #2c5f7a;
+      width: 0%;
+      height: 4px;
+      border-radius: 10px;
+      transition: width 0.2s ease;
+    }
+    .stage-selector button {
+      transition: 0.1s;
+    }
+    .btn-ghost-stage {
+      background: transparent;
+      border: none;
+      font-size: 0.75rem;
+    }
+    footer {
+      font-size: 0.7rem;
+    }
+    @media (max-width: 640px) {
+      .sentence-core {
+        font-size: 1.2rem;
+      }
+    }
+  </style>
+</head>
+<body class="pt-4 pb-5">
+
+<div class="container" style="max-width: 880px;">
+  <!-- header: silent vibe -->
+  <div class="text-center mb-4">
+    <h2 class="fw-semibold" style="color: #1f3e48;">same sentence · deeper ability</h2>
+    <p class="text-secondary-emphasis small">four stages, one sentence set. fill different blanks — the engine grows with you.</p>
+  </div>
+
+  <!-- main engine card -->
+  <div class="engine-card p-4 p-md-5 mb-4">
+    <!-- invisible progress: shows exploration depth -->
+    <div class="mb-3">
+      <div class="d-flex justify-content-between small text-secondary mb-1">
+        <span><i class="bi bi-magic"></i> exploration depth</span>
+        <span id="depthHint">functional words</span>
+      </div>
+      <div class="progress-soft">
+        <div class="silent-bar" id="depthProgress" style="width: 0%;"></div>
+      </div>
+    </div>
+
+    <!-- stage selector (silent reveal, not shouting) -->
+    <div class="stage-selector d-flex flex-wrap gap-2 mb-4 justify-content-between align-items-center">
+      <div class="d-flex gap-2 flex-wrap">
+        <button data-stage="1" class="stage-btn btn btn-sm rounded-pill px-3" style="background:#f0f4f9; border:none;">🔗 glue</button>
+        <button data-stage="2" class="stage-btn btn btn-sm rounded-pill px-3" style="background:#f0f4f9; border:none;">🧱 core slots</button>
+        <button data-stage="3" class="stage-btn btn btn-sm rounded-pill px-3" style="background:#f0f4f9; border:none;">🌀 phrasal sweep</button>
+        <button data-stage="4" class="stage-btn btn btn-sm rounded-pill px-3" style="background:#f0f4f9; border:none;">✨ affix sweep</button>
+      </div>
+      <div class="small text-secondary" id="stageCaption">functional words: and, but, because...</div>
+    </div>
+
+    <!-- dynamic sentence with blank -->
+    <div class="sentence-core text-center mb-4" id="sentenceDisplay">
+      I ___ go to work.
+    </div>
+
+    <!-- input + suggestions -->
+    <div class="mb-3">
+      <input type="text" id="userFill" class="form-control quiet-input" placeholder="type your answer..." autocomplete="off">
+      <div class="d-flex flex-wrap justify-content-between mt-3 gap-2">
+        <div id="suggestionArea" class="d-flex flex-wrap gap-2"></div>
+        <button id="checkBtn" class="btn px-4 rounded-pill" style="background:#1f3e48; color:white; border:none;"><i class="bi bi-check-lg"></i> fill</button>
+      </div>
+    </div>
+
+    <!-- feedback area (no jargon) -->
+    <div id="feedbackMsg" class="feedback-area p-3 mt-3 small">
+      ✨ try filling the blank — the engine adapts across stages.
+    </div>
+    
+    <!-- subtle anchor for matrix stats -->
+    <div class="row text-center mt-4 g-2">
+      <div class="col-4">
+        <div class="bg-light rounded-4 py-2"><span class="fw-semibold" id="functionalAttempts">0</span><br><span class="small text-secondary">glue fills</span></div>
+      </div>
+      <div class="col-4">
+        <div class="bg-light rounded-4 py-2"><span class="fw-semibold" id="phrasalAttempts">0</span><br><span class="small text-secondary">phrasal tries</span></div>
+      </div>
+      <div class="col-4">
+        <div class="bg-light rounded-4 py-2"><span class="fw-semibold" id="affixAttempts">0</span><br><span class="small text-secondary">derived words</span></div>
+      </div>
+    </div>
+  </div>
+  <footer class="text-center text-secondary-emphasis small">
+    <i class="bi bi-grid-3x3-gap-fill"></i> one sentence set · four ways to explore · no levels, just discovery
+  </footer>
+</div>
+
+<script>
+  // ---------- FIXED SENTENCE SET (the same core sentences for all stages) ----------
+  const sentencesDB = [
+    { base: "I ___ go to work.", slots: { functional: ["because","but","and","so","if","when"], coreVerb: ["need","want","have","must","can","will"], phrasalVerb: ["get up","get out","get back","go on","rush out"], affixAdj: ["happily","quickly","easily","sadly","brightly"] } },
+    { base: "She is ___ woman.", slots: { functional: ["but","and","because"], coreSubject: ["She","He","My mother","The girl"], coreVerb: ["is","became","seems","feels"], affixAdj: ["happy","unhappy","careful","careless","kind","unkind"] } },
+    { base: "They ___ the door.", slots: { functional: ["and","but","so"], coreVerb: ["open","close","lock","break","paint"], phrasalVerb: ["open up","close down","break through","lock away"], affixNoun: ["carefully","noisily","suddenly"] } },
+    { base: "Please ___ the light.", slots: { functional: ["and","but","because"], coreVerb: ["turn off","turn on","switch","fix"], phrasalVerb: ["turn off","turn on","shut off","put on"], affixAdv: ["gently","quickly","silently"] } },
+    { base: "We need to ___ early.", slots: { functional: ["so","because","if"], coreVerb: ["wake up","leave","arrive","start"], phrasalVerb: ["wake up","get up","set off","head out"], affixAdj: ["really","absolutely","barely"] } }
+  ];
+  
+  let currentSentenceObj = null;
+  let activeStage = 1;       // 1: functional, 2: core slots, 3: phrasal sweep, 4: affix sweep
+  let currentBlankType = "functional";
+  
+  // discovery stats (silent)
+  let stats = { functional: 0, phrasal: 0, affix: 0 };
+  
+  // helper: pick random sentence
+  function pickRandomSentence() {
+    const idx = Math.floor(Math.random() * sentencesDB.length);
+    currentSentenceObj = { ...sentencesDB[idx] };
+    return currentSentenceObj;
+  }
+  
+  // get allowed answers based on stage + current sentence slots
+  function getAllowedSet(stage, sentence) {
+    if (stage === 1) return sentence.slots.functional || ["because","but","and","so","if","when"];
+    if (stage === 2) {
+      // core slots can be subject/verb/object — to keep simple we return coreVerb list (dynamic) + also allow pronouns?
+      let coreList = sentence.slots.coreVerb || ["need","want","have","go","get"];
+      if (sentence.base.includes("___ woman") || sentence.base.includes("___ the door")) {
+        coreList = [...coreList, ...(sentence.slots.coreSubject || [])];
+      }
+      return coreList;
+    }
+    if (stage === 3) return sentence.slots.phrasalVerb || ["get up","get out","turn off","wake up","go on"];
+    if (stage === 4) {
+      let affixList = sentence.slots.affixAdj || sentence.slots.affixAdv || sentence.slots.affixNoun || ["happily","carefully","unhappy","quickly","brightly"];
+      if (sentence.base.includes("woman")) affixList = ["happy","unhappy","careful","careless","kind","unkind"];
+      if (sentence.base.includes("light")) affixList = ["gently","quickly","silently","automatically"];
+      return affixList;
+    }
+    return [];
+  }
+  
+  // render sentence with blank label (stage-based hint)
+  function renderSentence(sentence, stage) {
+    let baseText = sentence.base;
+    let blankLabel = "______";
+    if (stage === 1) blankLabel = " [glue] ";
+    else if (stage === 2) blankLabel = " [word] ";
+    else if (stage === 3) blankLabel = " [phrasal verb] ";
+    else blankLabel = " [build] ";
+    const displayed = baseText.replace("___", blankLabel);
+    document.getElementById("sentenceDisplay").innerHTML = displayed;
+  }
+  
+  // update suggestions
+  function updateSuggestions() {
+    const allowed = getAllowedSet(activeStage, currentSentenceObj);
+    const container = document.getElementById("suggestionArea");
+    container.innerHTML = "";
+    const unique = [...new Set(allowed)].slice(0, 5);
+    unique.forEach(opt => {
+      const chip = document.createElement("span");
+      chip.className = "suggest-chip";
+      chip.innerText = opt;
+      chip.addEventListener("click", () => {
+        document.getElementById("userFill").value = opt;
+      });
+      container.appendChild(chip);
+    });
+    if (allowed.length === 0) {
+      const chip = document.createElement("span");
+      chip.className = "suggest-chip";
+      chip.innerText = "try any meaningful word";
+      container.appendChild(chip);
+    }
+    // update caption
+    const stageNames = {1:"connecting words (and, but, because, if...)", 2:"nouns / verbs / core words", 3:"phrasal verbs: get up, turn off, wake up...", 4:"affixes: un-, -ly, -ness, re-..."};
+    document.getElementById("stageCaption").innerHTML = stageNames[activeStage] || "";
+  }
+  
+  // normalize & validate answer for current stage
+  function isValidAnswer(userAnswer, stage, sentence) {
+    let answer = userAnswer.trim().toLowerCase();
+    if (answer === "") return false;
+    const allowedSet = getAllowedSet(stage, sentence).map(s => s.toLowerCase());
+    if (allowedSet.includes(answer)) return true;
+    // Stage 4 also accept affix combos from root words not explicitly listed? dynamic check (extra generative touch)
+    if (stage === 4) {
+      // allow un+adj, adj+ly, re+verb forms
+      if ((answer.startsWith("un") && allowedSet.some(a => a === answer.slice(2))) ||
+          (answer.endsWith("ly") && allowedSet.some(a => a === answer.slice(0,-2))) ||
+          (answer.endsWith("ness") && allowedSet.some(a => a === answer.slice(0,-4))) ||
+          (answer.startsWith("re") && allowedSet.some(a => a === answer.slice(2)))) {
+        return true;
+      }
+      // additional pattern like "careful/careless"
+      if ((answer === "careful" || answer === "careless") && sentence.base.includes("woman")) return true;
+    }
+    // Stage 3 additional phrasal dynamic get-up pattern
+    if (stage === 3 && (answer.includes(" ") && answer.split(" ").length === 2)) {
+      // accept any verb+particle that seems plausible (demo flexibility)
+      return true;
+    }
+    return false;
+  }
+  
+  function updateDepthUI() {
+    let totalDepth = (stats.functional * 2) + (stats.phrasal * 5) + (stats.affix * 6);
+    let width = Math.min(12 + totalDepth, 96);
+    document.getElementById("depthProgress").style.width = width + "%";
+    let hintText = "functional stage";
+    if (stats.phrasal > 2) hintText = "phrasal explorer";
+    if (stats.affix > 3) hintText = "word builder";
+    if (stats.functional + stats.phrasal + stats.affix > 20) hintText = "deep flow";
+    document.getElementById("depthHint").innerHTML = hintText;
+    document.getElementById("functionalAttempts").innerText = stats.functional;
+    document.getElementById("phrasalAttempts").innerText = stats.phrasal;
+    document.getElementById("affixAttempts").innerText = stats.affix;
+  }
+  
+  function handleCheck() {
+    const userAnswer = document.getElementById("userFill").value;
+    if (!userAnswer.trim()) {
+      document.getElementById("feedbackMsg").innerHTML = "🌱 type something into the blank — anything. the engine will adapt.";
+      return;
+    }
+    const isValid = isValidAnswer(userAnswer, activeStage, currentSentenceObj);
+    if (isValid) {
+      // update stats based on stage
+      if (activeStage === 1) stats.functional += 1;
+      else if (activeStage === 2) { /* core slot, counts as functional breadth*/ stats.functional += 0.5; stats.functional = Math.floor(stats.functional); }
+      else if (activeStage === 3) stats.phrasal += 1;
+      else if (activeStage === 4) stats.affix += 1;
+      
+      let msg = `✓ “${userAnswer}” works. `;
+      if (activeStage === 3 && userAnswer.includes(" ")) msg += `you just used a phrasal verb pattern. try another particle! `;
+      else if (activeStage === 4 && (userAnswer.startsWith("un") || userAnswer.endsWith("ly") || userAnswer.endsWith("ness"))) msg += `✨ you built a new word using affixes — the engine sees it. `;
+      else msg += `that fits perfectly at this stage. `;
+      msg += `same sentence, deeper feel.`;
+      document.getElementById("feedbackMsg").innerHTML = `🎯 ${msg}`;
+      
+      // auto-rotate to another sentence but keep same stage (refresh challenge)
+      pickRandomSentence();
+      renderSentence(currentSentenceObj, activeStage);
+      updateSuggestions();
+      document.getElementById("userFill").value = "";
+      updateDepthUI();
+    } else {
+      const allowedShort = getAllowedSet(activeStage, currentSentenceObj).slice(0,3).join(", ");
+      document.getElementById("feedbackMsg").innerHTML = `❌ “${userAnswer}” doesn't fit this blank right now. try something like: ${allowedShort} — or explore suggestions.`;
+    }
+  }
+  
+  function setStage(stage) {
+    activeStage = stage;
+    // change blank type
+    if (activeStage === 1) currentBlankType = "functional";
+    else if (activeStage === 2) currentBlankType = "core slots";
+    else if (activeStage === 3) currentBlankType = "phrasal sweep";
+    else currentBlankType = "affix sweep";
+    // update visual active stage (no loud badges)
+    document.querySelectorAll('.stage-btn').forEach(btn => {
+      btn.style.background = "#f0f4f9";
+      btn.style.color = "#1f3e48";
+      btn.classList.remove('fw-semibold');
+    });
+    const activeBtn = document.querySelector(`.stage-btn[data-stage='${stage}']`);
+    if (activeBtn) {
+      activeBtn.style.background = "#1f3e48";
+      activeBtn.style.color = "white";
+      activeBtn.classList.add('fw-semibold');
+    }
+    // refresh sentence with same object
+    renderSentence(currentSentenceObj, activeStage);
+    updateSuggestions();
+    document.getElementById("userFill").value = "";
+    document.getElementById("feedbackMsg").innerHTML = `🌀 stage changed — now fill the blank with ${currentBlankType}. same sentence.`;
+  }
+  
+  // init: random sentence
+  function init() {
+    pickRandomSentence();
+    renderSentence(currentSentenceObj, 1);
+    updateSuggestions();
+    // attach event listeners
+    document.getElementById("checkBtn").addEventListener("click", handleCheck);
+    document.querySelectorAll(".stage-btn").forEach(btn => {
+      btn.addEventListener("click", (e) => {
+        const stageNum = parseInt(btn.getAttribute("data-stage"), 10);
+        setStage(stageNum);
+      });
+    });
+    // initial stage style
+    setStage(1);
+    updateDepthUI();
+    // extra enter key
+    document.getElementById("userFill").addEventListener("keypress", (e) => {
+      if (e.key === "Enter") handleCheck();
+    });
+  }
+  
+  init();
+</script>
+</body>
+</html>

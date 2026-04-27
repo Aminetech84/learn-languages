@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>CoreLang | Silent Engine</title>
+    <!-- Bootstrap 5 + Icons + smooth vibe -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        body {
+            background: #f4f7fc;
+            font-family: 'Segoe UI', system-ui, -apple-system, 'Inter', sans-serif;
+        }
+        /* silent card style: no badges screaming "level 1", no jargon walls */
+        .silent-card {
+            border: none;
+            border-radius: 2rem;
+            background: rgba(255,255,255,0.96);
+            backdrop-filter: blur(0px);
+            box-shadow: 0 12px 28px rgba(0,0,0,0.05), 0 0 0 1px rgba(0,0,0,0.02);
+            transition: all 0.2s ease;
+        }
+        .hero-blur {
+            background: linear-gradient(135deg, #1a2a3a 0%, #0f212f 100%);
+            border-radius: 2rem;
+            color: white;
+        }
+        .quiet-input {
+            border-radius: 3rem;
+            border: 1px solid #dee2e6;
+            padding: 0.8rem 1.2rem;
+            font-size: 1rem;
+            background: #ffffff;
+            transition: 0.2s;
+        }
+        .quiet-input:focus {
+            border-color: #86b7fe;
+            box-shadow: 0 0 0 3px rgba(13,110,253,0.1);
+            outline: none;
+        }
+        .btn-silent {
+            border-radius: 3rem;
+            padding: 0.6rem 1.6rem;
+            font-weight: 500;
+            transition: 0.2s;
+            background: #0f212f;
+            border: none;
+            color: white;
+        }
+        .btn-silent:hover {
+            background: #1a3a4a;
+            transform: translateY(-1px);
+        }
+        .btn-outline-silent {
+            border-radius: 3rem;
+            border: 1px solid #cbd5e1;
+            background: white;
+            color: #1e2a36;
+        }
+        .btn-outline-silent:hover {
+            background: #f1f5f9;
+            border-color: #94a3b8;
+        }
+        .suggestion-chip {
+            background: #eef2ff;
+            padding: 0.4rem 1rem;
+            border-radius: 3rem;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: 0.1s;
+            display: inline-block;
+            border: 1px solid #e0e7ff;
+        }
+        .suggestion-chip:hover {
+            background: #e0e7ff;
+            transform: scale(0.97);
+        }
+        .feedback-area {
+            background: #f8fafc;
+            border-radius: 1.5rem;
+            padding: 1rem 1.3rem;
+            font-size: 0.95rem;
+            border-left: 4px solid #0f212f;
+        }
+        .engine-hint {
+            font-size: 0.75rem;
+            color: #5f6c7a;
+            text-align: center;
+            letter-spacing: 0.2px;
+        }
+        .progress-naked {
+            height: 4px;
+            background: #e2e8f0;
+            border-radius: 10px;
+        }
+        .progress-naked-bar {
+            background: #0f212f;
+            width: 0%;
+            height: 4px;
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+        /* no badges, no word lists, no jargon labels */
+        .no-shout {
+            text-decoration: none;
+        }
+        .quiet-footer {
+            border-top: 1px solid #e9edf2;
+            color: #7e8c9e;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+        }
+    </style>
+</head>
+<body class="pt-4 pb-5">
+
+<div class="container" style="max-width: 780px;">
+    <!-- header: silent, no "level 1 / generator" shouting -->
+    <div class="hero-blur p-4 p-md-5 mb-4 text-center">
+        <h1 class="display-6 fw-semibold mb-2">speak freely</h1>
+        <p class="lead fs-6 opacity-75 mb-0">build sentences. you’ll feel the flow.</p>
+        <div class="mt-3 small opacity-50">no lists. no rules. just practice.</div>
+    </div>
+
+    <!-- main silent engine card -->
+    <div class="silent-card p-4 p-md-5 mb-4">
+        <!-- subtle adaptive progress (invisible architecture) -->
+        <div class="mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="small text-secondary-emphasis"><i class="bi bi-droplet-half me-1"></i> rhythm</span>
+                <span class="small text-secondary-emphasis" id="strengthText">warming up</span>
+            </div>
+            <div class="progress-naked">
+                <div class="progress-naked-bar" id="silentProgress" style="width: 12%;"></div>
+            </div>
+        </div>
+
+        <!-- challenge prompt area: natural text -->
+        <div class="mb-4 text-center">
+            <div class="fs-5 fw-medium text-dark-emphasis" id="challengePrompt">complete the sentence</div>
+            <div class="mt-3 p-3 bg-light rounded-4 fs-4 fw-semibold text-dark" id="sentenceStem">I ___ to work every day.</div>
+        </div>
+
+        <!-- user input: quiet box -->
+        <div class="mb-3">
+            <input type="text" id="userInput" class="form-control quiet-input" placeholder="type your answer..." autocomplete="off">
+            <div class="d-flex justify-content-between mt-2">
+                <div id="suggestionArea" class="d-flex flex-wrap gap-2"></div>
+                <button id="checkBtn" class="btn-silent px-4"><i class="bi bi-check2-circle me-1"></i> check</button>
+            </div>
+        </div>
+
+        <!-- feedback: conversational, no jargon -->
+        <div id="feedbackMsg" class="feedback-area mt-3">
+            ✨ try typing a word... the engine adapts.
+        </div>
+
+        <!-- subtle hint row (pattern discovery, not grammar lesson) -->
+        <div class="row mt-4 g-2 text-center">
+            <div class="col-6">
+                <button id="hintBtn" class="btn btn-outline-silent w-100"><i class="bi bi-lightbulb"></i> nudge</button>
+            </div>
+            <div class="col-6">
+                <button id="nextChallengeBtn" class="btn btn-outline-silent w-100"><i class="bi bi-arrow-repeat"></i> fresh</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- beneath the surface: engine stats (never shouts architecture, but gives rhythm) -->
+    <div class="row g-3 mb-4 text-center">
+        <div class="col-6">
+            <div class="bg-white rounded-4 p-2 shadow-sm">
+                <div class="fs-6 text-secondary">words you've mastered</div>
+                <div class="fs-3 fw-semibold" id="masteredCount">0</div>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="bg-white rounded-4 p-2 shadow-sm">
+                <div class="fs-6 text-secondary">discoveries</div>
+                <div class="fs-3 fw-semibold" id="affixDiscoveryCount">0</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="quiet-footer text-center pt-3 small">
+        <i class="bi bi-box-seam"></i> the engine works underneath — no lists, no shouting
+    </div>
+</div>
+
+<script>
+    // ---------- SILENT CORE + GENERATOR ENGINE (underneath) ----------
+    // level 1: core words (subset for smooth experience but still generative)
+    const functional = ["i","you","he","she","it","we","they","to","for","with","by","in","on","at","up","down","out","off","over","back","away","through","about","into","without","but","so","because","very","just","still","already","never","always","maybe"];
+    const nouns = ["time","day","man","woman","child","life","world","house","work","hand","eye","friend","mother","father","water","food","name","story","book","money","car","light","night","morning","end","side","voice","love","hope","truth","city","country"];
+    const verbs = ["be","have","do","say","get","make","go","take","come","see","think","look","want","give","use","find","tell","ask","work","feel","try","leave","call","need","become","put","keep","let","begin","show","hear","run","move","live","hold","bring","write","sit","stand","lose","pay","meet","learn","change"];
+    const adjectives = ["good","bad","new","old","young","big","small","long","short","high","low","hard","soft","fast","slow","rich","poor","strong","weak","hot","cold","dark","bright","happy","sad","calm","angry","proud","afraid","alone","free","true","real","full","empty","open","alive"];
+    const adverbs = ["very","too","so","quite","almost","really","still","already","never","always","often","sometimes","soon","late","early","now","then","here","well","fast","hard","maybe","certainly","simply","suddenly","finally","together"];
+    const coreSet = new Set([...functional, ...nouns, ...verbs, ...adjectives, ...adverbs]);
+    
+    // permitted affix rules (silent generators)
+    const affixRules = [
+        { base: "happy", rule: "un-", result: "unhappy", pattern: "un + happy = not happy" },
+        { base: "do", rule: "re-", result: "redo", pattern: "re + do = do again" },
+        { base: "care", rule: "-ful", result: "careful", pattern: "care + ful = full of care" },
+        { base: "hope", rule: "-less", result: "hopeless", pattern: "hope + less = without hope" },
+        { base: "work", rule: "-er", result: "worker", pattern: "work + er = person who works" },
+        { base: "sad", rule: "-ly", result: "sadly", pattern: "sad + ly = in a sad way" },
+        { base: "dark", rule: "-ness", result: "darkness", pattern: "dark + ness = state of dark" },
+        { base: "understand", rule: "mis-", result: "misunderstand", pattern: "mis + understand = understand wrongly" }
+    ];
+    
+    // phrasal possibilities (silent)
+    const phrasalMap = {
+        "get up": "rise from bed", "get out": "leave", "give up": "stop trying", "take off": "remove / leave ground",
+        "come back": "return", "run out": "use all", "hold on": "wait", "turn off": "stop device", "go on": "continue"
+    };
+    const verbParticles = ["get up","get out","give up","take off","come back","run out","hold on","turn off","go on"];
+    
+    // challenge bank (dynamic, uses core words only)
+    let challenges = [
+        { stem: "I ___ to work every day.", answer: "go", hint: "a verb for movement" },
+        { stem: "She ___ a happy woman.", answer: "is", hint: "form of 'be'" },
+        { stem: "They ___ to the store yesterday.", answer: "went", hint: "past of go" },  // irregular stored but allowed
+        { stem: "Can you ___ me the book?", answer: "give", hint: "pass / hand over" },
+        { stem: "He ___ his keys on the table.", answer: "put", hint: "place down" },
+        { stem: "We need to ___ about the plan.", answer: "think", hint: "consider" },
+        { stem: "Don't ___ up! keep going.", answer: "give", hint: "surrender (but phrasal engine)" },
+        { stem: "The water is too ___ to drink.", answer: "cold", hint: "opposite of hot" },
+        { stem: "She ___ a new language.", answer: "learn", hint: "study & remember" },
+        { stem: "I ___ happy when I see you.", answer: "feel", hint: "emotion verb" }
+    ];
+    
+    // extended generative sentences: adaptive
+    let currentChallengeIndex = 0;
+    let masteredWords = new Set();      // words user answered correctly (core)
+    let affixDiscoveries = new Set();   // derived words discovered
+    
+    // function to pick challenge based on mastery (adaptive underneath)
+    function adaptChallenge() {
+        let pool = [...challenges];
+        if (masteredWords.size > 8) {
+            // mix more complex: add phrasal / derived stems without shouting
+            const advancedStems = [
+                { stem: "He decided to ___ smoking.", answer: "give up", hint: "phrasal verb: quit" },
+                { stem: "Please ___ the light before sleeping.", answer: "turn off", hint: "stop the light" },
+                { stem: "She ___ her coat and left.", answer: "took off", hint: "removed" },
+                { stem: "We ___ of milk. need to buy more.", answer: "ran out", hint: "used all" }
+            ];
+            pool.push(...advancedStems);
+        }
+        if (affixDiscoveries.size > 2) {
+            pool.push({ stem: "That idea is ___. (not possible)", answer: "unreal", hint: "un + real" });
+            pool.push({ stem: "She is ___; she forgot my birthday.", answer: "careless", hint: "without care" });
+        }
+        currentChallengeIndex = Math.floor(Math.random() * pool.length);
+        const challenge = pool[currentChallengeIndex];
+        document.getElementById("sentenceStem").innerText = challenge.stem;
+        document.getElementById("challengePrompt").innerHTML = "complete the sentence";
+        return challenge;
+    }
+    
+    let currentChallenge = null;
+    
+    function loadNewChallenge() {
+        currentChallenge = adaptChallenge();
+        document.getElementById("userInput").value = "";
+        document.getElementById("feedbackMsg").innerHTML = "✨ type your answer. the engine listens.";
+        updateSuggestionsBasedOnStem();
+        updateMasteredUI();
+    }
+    
+    // silent suggestions: based on core + generative patterns
+    function updateSuggestionsBasedOnStem() {
+        const stem = currentChallenge.stem.toLowerCase();
+        const suggestionDiv = document.getElementById("suggestionArea");
+        suggestionDiv.innerHTML = "";
+        let suggested = [];
+        // extract last word hints
+        if (stem.includes("___")) {
+            if (stem.includes("happy")) suggested = ["happy","unhappy","happiness"];
+            else if (stem.includes("care")) suggested = ["care","careful","careless"];
+            else if (stem.includes("give")) suggested = ["give","give up","gave"];
+            else if (stem.includes("go")) suggested = ["go","went","go on"];
+            else if (stem.includes("turn off")) suggested = ["turn off","turn","switch"];
+            else suggested = [currentChallenge.answer];
+        }
+        if (suggested.length === 0) suggested = [currentChallenge.answer];
+        suggested.slice(0,3).forEach(sug => {
+            const chip = document.createElement("span");
+            chip.className = "suggestion-chip";
+            chip.innerText = sug;
+            chip.addEventListener("click", () => {
+                document.getElementById("userInput").value = sug;
+            });
+            suggestionDiv.appendChild(chip);
+        });
+    }
+    
+    function normalizeAnswer(input, correctAnswer) {
+        let a = input.trim().toLowerCase().replace(/[^\w\s]/g, '');
+        let correct = correctAnswer.toLowerCase();
+        if (a === correct) return true;
+        // handle went/go (irregulars)
+        if (correct === "go" && a === "went") return true;
+        if (correct === "give up" && (a === "giveup" || a === "give up")) return true;
+        if (correct === "took off" && a === "take off") return true;
+        if (correct === "ran out" && (a === "run out" || a === "ranout")) return true;
+        if (correct === "unreal" && a === "unreal") return true;
+        if (correct === "careless" && a === "careless") return true;
+        return false;
+    }
+    
+    function handleCheck() {
+        const userAnswerRaw = document.getElementById("userInput").value;
+        if (!userAnswerRaw.trim()) {
+            document.getElementById("feedbackMsg").innerHTML = "🌱 type a word or short phrase. trust yourself.";
+            return;
+        }
+        const isCorrect = normalizeAnswer(userAnswerRaw, currentChallenge.answer);
+        const answerNorm = userAnswerRaw.trim().toLowerCase();
+        
+        if (isCorrect) {
+            // core word mastery (if word in core set or recognized)
+            if (coreSet.has(answerNorm) || currentChallenge.answer.split(" ").some(w => coreSet.has(w))) {
+                masteredWords.add(currentChallenge.answer);
+            }
+            // generator discovery: check affix or phrasal
+            let discovered = null;
+            for (let rule of affixRules) {
+                if (answerNorm === rule.result) {
+                    discovered = rule.result;
+                    affixDiscoveries.add(discovered);
+                }
+            }
+            for (let pv of verbParticles) {
+                if (answerNorm === pv) {
+                    affixDiscoveries.add(pv);
+                }
+            }
+            // extra discovery if answer uses re-, un-
+            if (answerNorm.startsWith("un") && coreSet.has(answerNorm.slice(2))) affixDiscoveries.add(answerNorm);
+            if (answerNorm.startsWith("re") && coreSet.has(answerNorm.slice(2))) affixDiscoveries.add(answerNorm);
+            
+            updateMasteredUI();
+            let praise = "✓ correct! ";
+            if (affixDiscoveries.size > 0 && answerNorm === affixRules.find(r=>r.result===answerNorm)?.result) {
+                praise += `you just built "${answerNorm}" — that's a new form!`;
+            } else if (verbParticles.includes(answerNorm)) {
+                praise += `"${answerNorm}" is a natural phrase. engine noted.`;
+            } else {
+                praise += `flow feels good.`;
+            }
+            document.getElementById("feedbackMsg").innerHTML = `🎉 ${praise} <br><small class="text-secondary">→ try next challenge</small>`;
+            // increase silent progress bar
+            let progressWidth = Math.min(20 + (masteredWords.size * 1.5) + (affixDiscoveries.size * 4), 96);
+            document.getElementById("silentProgress").style.width = progressWidth + "%";
+            document.getElementById("strengthText").innerHTML = progressWidth > 50 ? "finding range" : "warming up";
+            if (masteredWords.size > 12 || affixDiscoveries.size > 4) {
+                document.getElementById("strengthText").innerHTML = "flow building";
+            }
+            setTimeout(() => {
+                loadNewChallenge();
+            }, 1200);
+        } else {
+            let feedbackMsg = `❌ not quite. `;
+            if (currentChallenge.hint) feedbackMsg += `${currentChallenge.hint}. `;
+            feedbackMsg += `try again or use a nudge.`;
+            document.getElementById("feedbackMsg").innerHTML = feedbackMsg;
+        }
+    }
+    
+    function updateMasteredUI() {
+        document.getElementById("masteredCount").innerText = masteredWords.size;
+        document.getElementById("affixDiscoveryCount").innerText = affixDiscoveries.size;
+        let total = masteredWords.size + affixDiscoveries.size;
+        if (total > 15) {
+            document.getElementById("silentProgress").style.width = "88%";
+            document.getElementById("strengthText").innerHTML = "strong intuition";
+        }
+    }
+    
+    function giveHint() {
+        if (currentChallenge && currentChallenge.hint) {
+            document.getElementById("feedbackMsg").innerHTML = `💡 hint: ${currentChallenge.hint}`;
+        } else {
+            document.getElementById("feedbackMsg").innerHTML = `💡 think of a word that fits naturally. the engine believes in you.`;
+        }
+    }
+    
+    // reset / fresh challenge without penalizing
+    function nextChallenge() {
+        loadNewChallenge();
+        document.getElementById("feedbackMsg").innerHTML = "🌀 fresh sentence. keep going.";
+        document.getElementById("userInput").value = "";
+    }
+    
+    // bootstrap silent initialization: no word lists displayed, no architecture shouting
+    function initSilentEngine() {
+        loadNewChallenge();
+        document.getElementById("checkBtn").addEventListener("click", handleCheck);
+        document.getElementById("hintBtn").addEventListener("click", giveHint);
+        document.getElementById("nextChallengeBtn").addEventListener("click", nextChallenge);
+        // additional listener: pressing Enter
+        const inputField = document.getElementById("userInput");
+        inputField.addEventListener("keypress", function(e) {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                handleCheck();
+            }
+        });
+        // pre-seed some invisible mastery for demo smoothness but not shouting
+        setTimeout(() => {
+            document.getElementById("silentProgress").style.width = "12%";
+        }, 100);
+    }
+    
+    initSilentEngine();
+</script>
+</body>
+</html>
