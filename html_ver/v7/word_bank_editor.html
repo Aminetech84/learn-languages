@@ -1,0 +1,156 @@
+
+<style>
+.wb { padding: 1rem 0; font-family: var(--font-sans); }
+.wb-tabs { display: flex; gap: 6px; margin-bottom: 1.5rem; flex-wrap: wrap; }
+.tab { padding: 6px 14px; border-radius: 99px; border: 0.5px solid var(--color-border-secondary); background: transparent; font-size: 13px; color: var(--color-text-secondary); cursor: pointer; transition: all 0.15s; }
+.tab.active { background: var(--color-text-primary); color: var(--color-background-primary); border-color: transparent; }
+.tab-count { font-size: 11px; opacity: 0.6; margin-left: 4px; }
+.wb-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+.wb-label { font-size: 12px; color: var(--color-text-tertiary); }
+.wb-count { font-size: 13px; font-weight: 500; color: var(--color-text-secondary); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { padding: 5px 11px; border-radius: 8px; font-size: 13px; border: 0.5px solid var(--color-border-tertiary); background: var(--color-background-primary); color: var(--color-text-primary); cursor: pointer; transition: all 0.15s; user-select: none; }
+.chip:hover { border-color: var(--color-border-primary); }
+.chip.removed { background: var(--color-background-danger); color: var(--color-text-danger); border-color: var(--color-border-danger); text-decoration: line-through; opacity: 0.6; }
+.chip.new { background: var(--color-background-success); color: var(--color-text-success); border-color: var(--color-border-success); }
+.section-note { font-size: 13px; color: var(--color-text-secondary); line-height: 1.6; margin-bottom: 1rem; padding: 10px 14px; background: var(--color-background-secondary); border-radius: 8px; border-left: 2px solid var(--color-border-secondary); }
+.sub-label { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.07em; color: var(--color-text-tertiary); margin: 1rem 0 6px; }
+.legend { display: flex; gap: 12px; margin-bottom: 1rem; flex-wrap: wrap; }
+.leg { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--color-text-secondary); }
+.leg-dot { width: 10px; height: 10px; border-radius: 3px; }
+.leg-keep { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); }
+.leg-cut { background: var(--color-background-danger); border: 0.5px solid var(--color-border-danger); }
+.leg-new { background: var(--color-background-success); border: 0.5px solid var(--color-border-success); }
+</style>
+
+<div class="wb">
+<div class="wb-tabs" id="tabs"></div>
+<div id="panel"></div>
+</div>
+
+<script>
+const data = {
+  functional: {
+    label: "Functional words — the glue",
+    note: "Ordered by frequency. All 50 kept — these are the skeleton. Tap any to toggle.",
+    sub: [
+      { group: "Determiners & articles", words: ["the","a","an"] },
+      { group: "Prepositions (core)", words: ["of","to","in","for","on","with","by","at","from","into","within","between","against","per"] },
+      { group: "Direction & position", words: ["up","down","out","off","over","under","back","away","through","about","across","along","around","without"] },
+      { group: "Conjunctions", words: ["and","but","or","so","as","than","because","though","while","if","when","where","why","how"] },
+      { group: "Time & degree", words: ["then","now","during","very","just"] }
+    ],
+    cut: []
+  },
+  verbs: {
+    label: "Verb roots — the engine",
+    note: "Trimmed from 80 to 60. Cut words are dimmed — tap to restore. Removed: low-frequency or replaceable by phrases.",
+    sub: [
+      { group: "Tier 1 — ultra-high frequency (keep always)", words: ["be","have","do","say","get","make","go","take","come","see","know","think","look","want","give","use","find","tell","ask","work"] },
+      { group: "Tier 2 — high frequency", words: ["feel","try","leave","call","need","become","put","keep","let","begin","show","hear","run","move","live","believe","hold","bring","write","sit"] },
+      { group: "Tier 3 — core but learnable later", words: ["stand","lose","pay","meet","set","learn","change","love","hate","start","stop","help","care","hope","grow","turn","play","read","speak","listen"] }
+    ],
+    cut: ["seem","happen","include","continue","watch","walk","break","open","close","build","win","fail","choose","forget","remember","understand","follow","lead","wait","kill","die"]
+  },
+  nouns: {
+    label: "Noun roots — the world",
+    note: "All 30 kept. Tight and well-chosen — every word earns its place.",
+    sub: [
+      { group: "People", words: ["man","woman","child","mother","father","friend"] },
+      { group: "Life & place", words: ["time","year","day","week","life","world","place","way"] },
+      { group: "Objects & space", words: ["house","room","door","hand","eye","head","car","book","water","food","money","word","name","story","work"] }
+    ],
+    cut: []
+  },
+  adjectives: {
+    label: "Adjective roots — the color",
+    note: "Kept flat as requested. Reordered by natural pairs — easier to teach and remember.",
+    sub: [
+      { group: "Size & dimension", words: ["big","small","long","short","high","low","wide","deep"] },
+      { group: "Quality", words: ["good","bad","new","old","young","hard","soft","heavy","light"] },
+      { group: "Speed & state", words: ["fast","slow","hot","cold","dark","bright","rich","poor","strong","weak","happy","sad","afraid"] }
+    ],
+    cut: []
+  },
+  adverbs: {
+    label: "Adverb roots — the modifier",
+    note: "Expanded and split into three functions. Manner adverbs added — these are the ones your sentences actually use.",
+    sub: [
+      { group: "Intensifiers", words: ["very","too","so","really","almost"] },
+      { group: "Frequency", words: ["never","always","sometimes","often","already","still","again"] },
+      { group: "Manner (new)", words: ["well","together","carefully","quietly","quickly","slowly","happily","sadly","softly","early","late","alone","away","hard"] }
+    ],
+    cut: []
+  }
+};
+
+const removed = { functional: new Set(), verbs: new Set(data.verbs.cut), nouns: new Set(), adjectives: new Set(), adverbs: new Set() };
+const isNew = { adverbs: new Set(["often","already","still","again","carefully","quietly","quickly","slowly","happily","sadly","softly","early","late","alone"]) };
+
+let active = "functional";
+
+function countActive(key) {
+  const d = data[key];
+  let total = d.sub.reduce((a,g) => a + g.words.length, 0);
+  return total - removed[key].size;
+}
+
+function renderTabs() {
+  const keys = Object.keys(data);
+  document.getElementById('tabs').innerHTML = keys.map(k => `
+    <button class="tab ${k===active?'active':''}" onclick="setTab('${k}')">
+      ${data[k].label.split('—')[0].trim()}
+      <span class="tab-count">${countActive(k)}</span>
+    </button>
+  `).join('');
+}
+
+function toggle(key, word) {
+  if (removed[key].has(word)) removed[key].delete(word);
+  else removed[key].add(word);
+  renderTabs();
+  renderPanel();
+}
+
+function renderPanel() {
+  const d = data[active];
+  const rm = removed[active];
+  const nw = isNew[active] || new Set();
+  const total = d.sub.reduce((a,g) => a + g.words.length, 0);
+  const kept = total - rm.size;
+
+  let html = `<div class="section-note">${d.note}</div>`;
+  html += `<div class="legend">
+    <div class="leg"><div class="leg-dot leg-keep"></div> keep</div>
+    ${rm.size > 0 ? `<div class="leg"><div class="leg-dot leg-cut"></div> cut (tap to restore)</div>` : ''}
+    ${nw.size > 0 ? `<div class="leg"><div class="leg-dot leg-new"></div> new addition</div>` : ''}
+  </div>`;
+  html += `<div class="wb-meta"><span class="wb-label">${d.label}</span><span class="wb-count">${kept} words</span></div>`;
+
+  d.sub.forEach(g => {
+    html += `<div class="sub-label">${g.group}</div><div class="chips">`;
+    g.words.forEach(w => {
+      const cut = rm.has(w);
+      const fresh = nw.has(w);
+      html += `<div class="chip ${cut?'removed':''} ${fresh&&!cut?'new':''}" onclick="toggle('${active}','${w}')">${w}</div>`;
+    });
+    html += `</div>`;
+  });
+
+  if (active === 'verbs' && data.verbs.cut.length) {
+    html += `<div class="sub-label">cut from original list</div><div class="chips">`;
+    data.verbs.cut.forEach(w => {
+      const restored = !removed.verbs.has(w);
+      html += `<div class="chip ${restored?'new':'removed'}" onclick="toggle('verbs','${w}')">${w}</div>`;
+    });
+    html += `</div>`;
+  }
+
+  document.getElementById('panel').innerHTML = html;
+}
+
+function setTab(key) { active = key; renderTabs(); renderPanel(); }
+
+renderTabs();
+renderPanel();
+</script>

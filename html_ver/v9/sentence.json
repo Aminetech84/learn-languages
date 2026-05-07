@@ -1,0 +1,78 @@
+[
+  {
+    "id": 1,
+    "title": "The young woman",
+    "steps": [
+      { "tokens": ["woman"], "hint": "noun — anchor" },
+      { "tokens": ["The ", "woman"], "hint": "the — determiner" },
+      { "tokens": ["The ", "young ", "woman"], "hint": "young — adjective" },
+      { "tokens": ["The ", "young ", "woman ", "gets up"], "hint": "gets up — phrasal verb" },
+      { "tokens": ["The ", "young ", "woman ", "gets up ", "early"], "hint": "early — adverb" },
+      { "tokens": ["The ", "young ", "woman ", "gets up ", "early ", "because"], "hint": "because — conjunction" },
+      { "tokens": ["The ", "young ", "woman ", "gets up ", "early ", "because ", "she ", "loves"], "hint": "she loves — pronoun + verb" },
+      { "tokens": ["The ", "young ", "woman ", "gets up ", "early ", "because ", "she ", "loves ", "her ", "job,"], "hint": "her job — possessive + noun" },
+      { "tokens": ["The ", "young ", "woman ", "gets up ", "early ", "because ", "she ", "loves ", "her ", "job, ", "and"], "hint": "and — coordinator" },
+      { "tokens": ["The ", "young ", "woman ", "gets up ", "early ", "because ", "she ", "loves ", "her ", "job, ", "and ", "she ", "carries on ", "working"], "hint": "carries on — phrasal verb" },
+      { "tokens": ["The ", "young ", "woman ", "gets up ", "early ", "because ", "she ", "loves ", "her ", "job, ", "and ", "she ", "carries on ", "working ", "happily ", "all ", "day."], "hint": "happily — happy + -ly" }
+    ]
+  },
+  {
+    "id": 2,
+    "title": "The old man",
+    "steps": [
+      { "tokens": ["man"], "hint": "noun — anchor" },
+      { "tokens": ["The ", "old ", "man"], "hint": "old — adjective" },
+      { "tokens": ["The ", "old ", "man ", "sits back"], "hint": "sits back — phrasal verb" },
+      { "tokens": ["The ", "old ", "man ", "sits back ", "alone"], "hint": "alone — adverb" },
+      { "tokens": ["The ", "old ", "man ", "sits back ", "alone ", "by ", "the ", "door"], "hint": "by the door — prepositional phrase" },
+      { "tokens": ["The ", "old ", "man ", "sits back ", "alone ", "by ", "the ", "door ", "and ", "goes over"], "hint": "goes over — phrasal verb" },
+      { "tokens": ["The ", "old ", "man ", "sits back ", "alone ", "by ", "the ", "door ", "and ", "goes over ", "his ", "life"], "hint": "his life — possessive + noun" },
+      { "tokens": ["The ", "old ", "man ", "sits back ", "alone ", "by ", "the ", "door ", "and ", "goes over ", "his ", "life ", "with ", "remarkable ", "calmness,"], "hint": "calmness — calm + -ness" },
+      { "tokens": ["The ", "old ", "man ", "sits back ", "alone ", "by ", "the ", "door ", "and ", "goes over ", "his ", "life ", "with ", "remarkable ", "calmness, ", "no ", "longer ", "sad."], "hint": "no longer — negation phrase" }
+    ]
+  },
+  {
+    "id": 3,
+    "title": "The child",
+    "steps": [
+      { "tokens": ["child"], "hint": "noun — anchor" },
+      { "tokens": ["The ", "child"], "hint": "the — determiner" },
+      { "tokens": ["The ", "child ", "was ", "afraid"], "hint": "afraid — adjective" },
+      { "tokens": ["The ", "child ", "was ", "afraid ", "of ", "the ", "dark,"], "hint": "of the dark — prepositional phrase" },
+      { "tokens": ["The ", "child ", "was ", "afraid ", "of ", "the ", "dark, ", "so"], "hint": "so — result conjunction" },
+      { "tokens": ["The ", "child ", "was ", "afraid ", "of ", "the ", "dark, ", "so ", "she ", "turned on"], "hint": "turned on — phrasal verb" },
+      { "tokens": ["The ", "child ", "was ", "afraid ", "of ", "the ", "dark, ", "so ", "she ", "turned on ", "the ", "light"], "hint": "the light — noun phrase" },
+      { "tokens": ["The ", "child ", "was ", "afraid ", "of ", "the ", "dark, ", "so ", "she ", "turned on ", "the ", "light ", "because ", "she ", "could not ", "settle down."], "hint": "settle down — phrasal verb" }
+    ]
+  },
+  {
+    "id": 4,
+    "title": "She works",
+    "steps": [
+      { "tokens": ["She"], "hint": "pronoun — anchor" },
+      { "tokens": ["She ", "works"], "hint": "works — verb root" },
+      { "tokens": ["She ", "keeps on ", "working"], "hint": "keeps on — phrasal verb" },
+      { "tokens": ["She ", "keeps on ", "working ", "tirelessly"], "hint": "tirelessly — tire + -less + -ly" },
+      { "tokens": ["She ", "keeps on ", "working ", "tirelessly ", "because"], "hint": "because — conjunction" },
+      { "tokens": ["She ", "keeps on ", "working ", "tirelessly ", "because ", "she ", "wants"], "hint": "wants — verb" },
+      { "tokens": ["She ", "keeps on ", "working ", "tirelessly ", "because ", "she ", "wants ", "a ", "meaningful ", "life"], "hint": "meaningful — mean + -ful" },
+      { "tokens": ["She ", "keeps on ", "working ", "tirelessly ", "because ", "she ", "wants ", "a ", "meaningful ", "life ", "for ", "her ", "child,"], "hint": "for her child — purpose phrase" },
+      { "tokens": ["She ", "keeps on ", "working ", "tirelessly ", "because ", "she ", "wants ", "a ", "meaningful ", "life ", "for ", "her ", "child, ", "and ", "she ", "never ", "gives up."], "hint": "gives up — phrasal verb" }
+    ]
+  },
+  {
+    "id": 5,
+    "title": "The young man",
+    "steps": [
+      { "tokens": ["man"], "hint": "noun — anchor" },
+      { "tokens": ["The ", "young ", "man"], "hint": "young — adjective" },
+      { "tokens": ["The ", "young ", "man ", "tried"], "hint": "tried — verb root" },
+      { "tokens": ["The ", "young ", "man ", "tried ", "persistently"], "hint": "persistently — persist + -ent + -ly" },
+      { "tokens": ["The ", "young ", "man ", "tried ", "persistently ", "to ", "find out"], "hint": "find out — phrasal verb" },
+      { "tokens": ["The ", "young ", "man ", "tried ", "persistently ", "to ", "find out ", "about ", "work,"], "hint": "about work — prepositional phrase" },
+      { "tokens": ["The ", "young ", "man ", "tried ", "persistently ", "to ", "find out ", "about ", "work, ", "but"], "hint": "but — contrast conjunction" },
+      { "tokens": ["The ", "young ", "man ", "tried ", "persistently ", "to ", "find out ", "about ", "work, ", "but ", "the ", "world ", "was ", "hard,"], "hint": "hard — adjective" },
+      { "tokens": ["The ", "young ", "man ", "tried ", "persistently ", "to ", "find out ", "about ", "work, ", "but ", "the ", "world ", "was ", "hard, ", "and ", "he ", "almost ", "gave up ", "hope."], "hint": "gave up — phrasal verb" }
+    ]
+  }
+]
