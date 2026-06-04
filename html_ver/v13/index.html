@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Sentence Ladder MVP</title>
+  <style>
+    body { font-family: Arial; max-width: 700px; margin: 40px auto; }
+    button { margin: 5px; padding: 8px; }
+    .box { margin-top: 20px; padding: 10px; border: 1px solid #ccc; }
+  </style>
+</head>
+
+<body>
+
+<h2>Sentence Ladder</h2>
+
+<div class="box">
+  <b>Anchor Word:</b>
+  <div id="word"></div>
+</div>
+
+<div class="box">
+  <b>Templates:</b>
+  <div id="templates"></div>
+</div>
+
+<div class="box">
+  <b>Your Sentence:</b>
+  <div id="output"></div>
+</div>
+
+<button onclick="nextLevel()">Unlock Next Level</button>
+
+<script>
+const data = {
+  go: {
+    1: ["I ___"],
+    2: ["I go to ___", "I go to the ___"],
+    3: ["I go to the ___ because ___"],
+    4: ["I go ___ and I ___"]
+  }
+};
+
+const allowedWords = [
+  "I","go","to","the","because","and","a","market","school","home","friend","need","food"
+];
+
+let word = "go";
+let level = 1;
+let sentence = "";
+
+document.getElementById("word").innerText = word;
+
+function renderTemplates() {
+  const box = document.getElementById("templates");
+  box.innerHTML = "";
+
+  data[word][level].forEach(t => {
+    const btn = document.createElement("button");
+    btn.innerText = t;
+    btn.onclick = () => chooseTemplate(t);
+    box.appendChild(btn);
+  });
+}
+
+function chooseTemplate(template) {
+  let filled = prompt("Fill in the blank for: " + template);
+
+  let result = template.replace("___", filled);
+
+  // simple validation (your core idea)
+  let words = result.split(" ");
+  let valid = words.every(w => allowedWords.includes(w));
+
+  if (!valid) {
+    alert("Invalid word used (outside allowed set)");
+    return;
+  }
+
+  sentence += (sentence ? ". " : "") + result;
+  document.getElementById("output").innerText = sentence;
+}
+
+function nextLevel() {
+  if (level < 4) level++;
+  renderTemplates();
+}
+
+renderTemplates();
+</script>
+
+</body>
+</html>

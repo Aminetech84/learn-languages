@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CoreLang — Word to Story</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1208;
+    --paper: #f5f0e8;
+    --amber: #c8860a;
+    --amber-light: #e8a820;
+    --sage: #6b7c5c;
+    --dust: #d4c9b0;
+    --shadow: rgba(26,18,8,0.12);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    background-image: 
+      radial-gradient(ellipse at 20% 20%, rgba(200,134,10,0.06) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 80%, rgba(107,124,92,0.08) 0%, transparent 60%);
+  }
+
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 3rem 2rem;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 4rem;
+  }
+
+  .logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 0.5rem;
+  }
+
+  .tagline {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.8rem;
+    font-style: italic;
+    color: var(--ink);
+    font-weight: 400;
+    line-height: 1.3;
+  }
+
+  .tagline span {
+    color: var(--amber);
+    font-style: normal;
+    font-weight: 700;
+  }
+
+  /* Phase 1: Word Selection */
+  .phase {
+    display: none;
+    animation: fadeUp 0.5s ease forwards;
+  }
+  .phase.active { display: block; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .phase-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--sage);
+    margin-bottom: 1.5rem;
+  }
+
+  .word-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+  }
+
+  .word-card {
+    border: 1.5px solid var(--dust);
+    background: white;
+    padding: 1rem 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .word-card::before {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--amber);
+    transform: scaleX(0);
+    transition: transform 0.2s ease;
+  }
+
+  .word-card:hover::before,
+  .word-card.selected::before { transform: scaleX(1); }
+
+  .word-card:hover {
+    border-color: var(--amber);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px var(--shadow);
+  }
+
+  .word-card.selected {
+    border-color: var(--amber);
+    background: #fffbf2;
+  }
+
+  .word-main {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--ink);
+    display: block;
+  }
+
+  .word-type {
+    font-size: 0.6rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--sage);
+    margin-top: 0.2rem;
+    display: block;
+  }
+
+  /* Phase 2: Sentence Builder */
+  .sentence-stage {
+    background: white;
+    border: 1.5px solid var(--dust);
+    padding: 2.5rem 2rem;
+    margin-bottom: 2rem;
+    position: relative;
+    min-height: 120px;
+  }
+
+  .sentence-stage::before {
+    content: '"';
+    font-family: 'Playfair Display', serif;
+    font-size: 5rem;
+    color: var(--dust);
+    position: absolute;
+    top: -1rem;
+    left: 1rem;
+    line-height: 1;
+  }
+
+  .sentence-display {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    line-height: 1.7;
+    color: var(--ink);
+    min-height: 2.5rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .brick {
+    display: inline;
+    transition: all 0.3s ease;
+  }
+
+  .brick.new {
+    color: var(--amber);
+    animation: brickIn 0.4s ease forwards;
+  }
+
+  @keyframes brickIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); color: var(--ink); }
+  }
+
+  .brick.anchor {
+    color: var(--amber);
+    font-weight: 700;
+    font-style: italic;
+  }
+
+  .layer-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .layer-badge {
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    background: var(--ink);
+    color: var(--paper);
+    padding: 0.3rem 0.7rem;
+  }
+
+  .layer-desc {
+    font-size: 0.75rem;
+    color: var(--sage);
+    font-style: italic;
+  }
+
+  /* Bricks chooser */
+  .brick-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .brick-option {
+    border: 1.5px solid var(--dust);
+    background: white;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.8rem;
+    transition: all 0.15s ease;
+    position: relative;
+  }
+
+  .brick-option:hover {
+    border-color: var(--amber);
+    background: #fffbf2;
+    transform: translateY(-1px);
+  }
+
+  .brick-option .opt-hint {
+    display: block;
+    font-size: 0.55rem;
+    color: var(--sage);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-top: 0.1rem;
+  }
+
+  /* Progress */
+  .progress-track {
+    display: flex;
+    gap: 0.4rem;
+    margin-bottom: 2rem;
+    align-items: center;
+  }
+
+  .progress-dot {
+    width: 8px; height: 8px;
+    border: 1.5px solid var(--dust);
+    border-radius: 50%;
+    transition: all 0.3s ease;
+  }
+
+  .progress-dot.done {
+    background: var(--amber);
+    border-color: var(--amber);
+  }
+
+  .progress-dot.active {
+    border-color: var(--amber);
+    box-shadow: 0 0 0 3px rgba(200,134,10,0.15);
+  }
+
+  .progress-label {
+    font-size: 0.6rem;
+    color: var(--sage);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-left: 0.5rem;
+  }
+
+  /* Story phase */
+  .story-block {
+    background: white;
+    border-left: 3px solid var(--amber);
+    padding: 1.5rem 1.5rem 1.5rem 2rem;
+    margin-bottom: 1rem;
+    animation: fadeUp 0.4s ease forwards;
+  }
+
+  .story-sentence {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: var(--ink);
+  }
+
+  .story-sentence .anchor-word {
+    color: var(--amber);
+    font-weight: 700;
+  }
+
+  .story-counter {
+    font-size: 0.6rem;
+    color: var(--sage);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+
+  /* Buttons */
+  .btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 0.75rem 2rem;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s ease;
+  }
+
+  .btn-primary {
+    background: var(--ink);
+    color: var(--paper);
+  }
+
+  .btn-primary:hover {
+    background: var(--amber);
+    color: white;
+  }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--sage);
+    border: 1.5px solid var(--dust);
+  }
+
+  .btn-secondary:hover {
+    border-color: var(--sage);
+    color: var(--ink);
+  }
+
+  .btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  /* Story complete */
+  .story-complete {
+    text-align: center;
+    padding: 3rem 0;
+  }
+
+  .story-complete h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem;
+    font-style: italic;
+    margin-bottom: 0.5rem;
+  }
+
+  .story-complete p {
+    color: var(--sage);
+    font-size: 0.8rem;
+    margin-bottom: 2rem;
+  }
+
+  .word-count-badge {
+    display: inline-block;
+    background: var(--ink);
+    color: var(--paper);
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    padding: 0.4rem 1rem;
+    margin-bottom: 2rem;
+  }
+
+  hr.divider {
+    border: none;
+    border-top: 1px solid var(--dust);
+    margin: 2rem 0;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="logo">CoreLang</div>
+    <div class="tagline">We start with a <span>word</span>,<br>we reach a story.</div>
+  </header>
+
+  <!-- Phase 1: Choose anchor word -->
+  <div class="phase active" id="phase-choose">
+    <div class="phase-label">Step 1 — Choose your word</div>
+    <p style="font-size:0.8rem;color:var(--sage);margin-bottom:1.5rem;font-style:italic;">This word belongs to you. Your sentence will grow around it.</p>
+    <div class="word-grid" id="word-grid"></div>
+    <div class="actions">
+      <button class="btn btn-primary" id="btn-start" disabled>Build my sentence →</button>
+    </div>
+  </div>
+
+  <!-- Phase 2: Sentence Builder -->
+  <div class="phase" id="phase-build">
+    <div class="phase-label">Step 2 — Build your sentence</div>
+
+    <div class="progress-track" id="progress-track"></div>
+
+    <div class="layer-info">
+      <span class="layer-badge" id="layer-badge">Layer 1</span>
+      <span class="layer-desc" id="layer-desc">Adding the noun</span>
+    </div>
+
+    <div class="sentence-stage">
+      <div class="sentence-display" id="sentence-display">
+        <span style="color:var(--dust);font-style:italic;">Your sentence will appear here...</span>
+      </div>
+    </div>
+
+    <div class="brick-options" id="brick-options"></div>
+
+    <div class="actions">
+      <button class="btn btn-secondary" id="btn-restart">← Start over</button>
+    </div>
+  </div>
+
+  <!-- Phase 3: Story -->
+  <div class="phase" id="phase-story">
+    <div class="phase-label">Step 3 — Your story grows</div>
+    <div id="story-container"></div>
+    <div class="actions" id="story-actions"></div>
+  </div>
+
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────
+const WORDS = [
+  { word: 'man',   type: 'noun',      forms: ['man', 'men'] },
+  { word: 'go',    type: 'verb',      forms: ['go', 'goes', 'going', 'went', 'gone'] },
+  { word: 'make',  type: 'verb',      forms: ['make', 'makes', 'making', 'made'] },
+  { word: 'good',  type: 'adjective', forms: ['good', 'better', 'best', 'goodness'] },
+  { word: 'fast',  type: 'adverb',    forms: ['fast', 'faster', 'fastest'] },
+  { word: 'big',   type: 'adjective', forms: ['big', 'bigger', 'biggest'] },
+  { word: 'have',  type: 'verb',      forms: ['have', 'has', 'having', 'had'] },
+  { word: 'not',   type: 'function',  forms: ['not', "don't", "didn't", "isn't"] },
+  { word: 'and',   type: 'function',  forms: ['and', 'but', 'so'] },
+  { word: 'the',   type: 'article',   forms: ['the', 'a', 'an'] },
+];
+
+// Sentence layers — each layer adds one brick type
+// Template uses {ANCHOR} for the chosen word
+const LAYERS = [
+  {
+    badge: 'Layer 1',
+    desc: 'The noun — your word enters',
+    options: [
+      { text: '{ANCHOR}',       hint: 'noun' },
+    ],
+    auto: true // auto-place anchor
+  },
+  {
+    badge: 'Layer 2',
+    desc: 'Add an article',
+    options: [
+      { text: 'The',  hint: 'definite' },
+      { text: 'A',    hint: 'indefinite' },
+    ],
+    position: 'prepend'
+  },
+  {
+    badge: 'Layer 3',
+    desc: 'Add an adjective',
+    options: [
+      { text: 'good',    hint: 'quality' },
+      { text: 'big',     hint: 'size' },
+      { text: 'fast',    hint: 'speed' },
+    ],
+    position: 'before-noun'
+  },
+  {
+    badge: 'Layer 4',
+    desc: 'Add a verb',
+    options: [
+      { text: 'goes',   hint: 'movement' },
+      { text: 'makes',  hint: 'creation' },
+      { text: 'has',    hint: 'possession' },
+    ],
+    position: 'after-noun'
+  },
+  {
+    badge: 'Layer 5',
+    desc: 'Add an adverb',
+    options: [
+      { text: 'fast',    hint: 'how' },
+      { text: 'better',  hint: 'how much' },
+      { text: 'not',     hint: 'negation' },
+    ],
+    position: 'after-verb'
+  },
+  {
+    badge: 'Layer 6',
+    desc: 'Connect — add a second clause',
+    options: [
+      { text: 'and does not stop',    hint: 'continuation' },
+      { text: 'but has no time',      hint: 'contrast' },
+      { text: 'and makes it good',    hint: 'result' },
+    ],
+    position: 'append'
+  },
+];
+
+// Story sentences template (after building)
+// {S} = completed sentence, {A} = anchor word
+const STORY_TEMPLATES = [
+  s => s,
+  (s, a) => `The biggest thing ${a} ever made was not made fast.`,
+  (s, a) => `A good ${a} goes further when the goal is not gone.`,
+  (s, a) => `${a.charAt(0).toUpperCase()+a.slice(1)} has had better days, and the best are not done.`,
+];
+
+// ── STATE ──────────────────────────────────────────────────────────────
+let selectedWord = null;
+let currentLayer = 0;
+let sentenceParts = {
+  article: '',
+  adjective: '',
+  noun: '',
+  verb: '',
+  adverb: '',
+  clause: '',
+};
+let builtSentences = [];
+
+// ── INIT ──────────────────────────────────────────────────────────────
+function init() {
+  renderWordGrid();
+  document.getElementById('btn-start').addEventListener('click', startBuild);
+  document.getElementById('btn-restart').addEventListener('click', restart);
+}
+
+function renderWordGrid() {
+  const grid = document.getElementById('word-grid');
+  grid.innerHTML = '';
+  WORDS.forEach(w => {
+    const card = document.createElement('div');
+    card.className = 'word-card';
+    card.innerHTML = `<span class="word-main">${w.word}</span><span class="word-type">${w.type}</span>`;
+    card.addEventListener('click', () => selectWord(w, card));
+    grid.appendChild(card);
+  });
+}
+
+function selectWord(w, card) {
+  document.querySelectorAll('.word-card').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+  selectedWord = w;
+  document.getElementById('btn-start').disabled = false;
+}
+
+// ── BUILD PHASE ──────────────────────────────────────────────────────
+function startBuild() {
+  showPhase('phase-build');
+  currentLayer = 0;
+  sentenceParts = { article:'', adjective:'', noun:'', verb:'', adverb:'', clause:'' };
+  renderProgress();
+  processLayer();
+}
+
+function renderProgress() {
+  const track = document.getElementById('progress-track');
+  track.innerHTML = '';
+  LAYERS.forEach((l, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'progress-dot' + (i < currentLayer ? ' done' : i === currentLayer ? ' active' : '');
+    track.appendChild(dot);
+  });
+  const label = document.createElement('span');
+  label.className = 'progress-label';
+  label.textContent = `${currentLayer + 1} of ${LAYERS.length}`;
+  track.appendChild(label);
+}
+
+function processLayer() {
+  if (currentLayer >= LAYERS.length) {
+    finishSentence();
+    return;
+  }
+
+  const layer = LAYERS[currentLayer];
+  document.getElementById('layer-badge').textContent = layer.badge;
+  document.getElementById('layer-desc').textContent = layer.desc;
+  renderProgress();
+
+  if (layer.auto) {
+    // Auto-place anchor word
+    sentenceParts.noun = selectedWord.word;
+    renderSentence(selectedWord.word, true);
+    currentLayer++;
+    setTimeout(processLayer, 600);
+    return;
+  }
+
+  renderBrickOptions(layer);
+}
+
+function renderBrickOptions(layer) {
+  const container = document.getElementById('brick-options');
+  container.innerHTML = '';
+  layer.options.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'brick-option';
+    btn.innerHTML = `${opt.text}<span class="opt-hint">${opt.hint}</span>`;
+    btn.addEventListener('click', () => chooseBrick(opt.text, layer.position));
+    container.appendChild(btn);
+  });
+}
+
+function chooseBrick(text, position) {
+  // Store in correct slot
+  if (position === 'prepend') sentenceParts.article = text;
+  else if (position === 'before-noun') sentenceParts.adjective = text;
+  else if (position === 'after-noun') sentenceParts.verb = text;
+  else if (position === 'after-verb') sentenceParts.adverb = text;
+  else if (position === 'append') sentenceParts.clause = text;
+
+  renderSentence(text, false);
+  currentLayer++;
+
+  document.getElementById('brick-options').innerHTML = '';
+  setTimeout(processLayer, 400);
+}
+
+function buildSentenceString() {
+  const p = sentenceParts;
+  let parts = [];
+  if (p.article) parts.push(p.article);
+  if (p.adjective) parts.push(p.adjective);
+  if (p.noun) parts.push(p.noun);
+  if (p.verb) parts.push(p.verb);
+  if (p.adverb) parts.push(p.adverb);
+  if (p.clause) parts.push(p.clause);
+  if (parts.length > 0) parts[0] = parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
+  return parts.join(' ');
+}
+
+function renderSentence(newBrick, isAnchor) {
+  const display = document.getElementById('sentence-display');
+  const sentence = buildSentenceString();
+
+  // Highlight the anchor word wherever it appears
+  const anchor = selectedWord.word;
+  const highlighted = sentence.replace(
+    new RegExp(`\\b${anchor}\\b`, 'gi'),
+    m => `<span class="brick anchor">${m}</span>`
+  );
+
+  // Flash the new brick
+  display.innerHTML = highlighted;
+  display.style.animation = 'none';
+  display.offsetHeight;
+  display.style.animation = 'brickIn 0.3s ease';
+}
+
+function finishSentence() {
+  const sentence = buildSentenceString() + '.';
+  builtSentences.push(sentence);
+  document.getElementById('brick-options').innerHTML = '';
+  showStory();
+}
+
+// ── STORY PHASE ──────────────────────────────────────────────────────
+function showStory() {
+  showPhase('phase-story');
+  const container = document.getElementById('story-container');
+  container.innerHTML = '';
+
+  const anchor = selectedWord.word;
+
+  // Generate story sentences
+  const storySentences = STORY_TEMPLATES.map((fn, i) => fn(builtSentences[0], anchor));
+
+  storySentences.forEach((sent, i) => {
+    const block = document.createElement('div');
+    block.className = 'story-block';
+    block.style.animationDelay = `${i * 0.15}s`;
+    block.style.opacity = '0';
+
+    const counter = document.createElement('div');
+    counter.className = 'story-counter';
+    counter.textContent = `Sentence ${i + 1}`;
+
+    const text = document.createElement('div');
+    text.className = 'story-sentence';
+
+    // Highlight anchor word
+    const highlighted = sent.replace(
+      new RegExp(`\\b${anchor}\\b`, 'gi'),
+      m => `<span class="anchor-word">${m}</span>`
+    );
+    text.innerHTML = highlighted;
+
+    block.appendChild(counter);
+    block.appendChild(text);
+    container.appendChild(block);
+
+    setTimeout(() => {
+      block.style.opacity = '1';
+      block.style.animation = 'fadeUp 0.5s ease forwards';
+    }, i * 150);
+  });
+
+  // Word count badge
+  const allWords = storySentences.join(' ').toLowerCase().split(/\s+/);
+  const uniqueRoots = new Set(WORDS.map(w => w.word));
+  const usedRoots = WORDS.filter(w => allWords.some(wrd => wrd.includes(w.word))).length;
+
+  const badge = document.createElement('div');
+  badge.style.textAlign = 'center';
+  badge.style.margin = '2rem 0';
+  badge.innerHTML = `<span class="word-count-badge">${usedRoots} core words used in this story</span>`;
+  container.appendChild(badge);
+
+  // Actions
+  const actions = document.getElementById('story-actions');
+  actions.innerHTML = '';
+
+  const btnMore = document.createElement('button');
+  btnMore.className = 'btn btn-primary';
+  btnMore.textContent = 'Choose another word →';
+  btnMore.addEventListener('click', restart);
+
+  const btnCopy = document.createElement('button');
+  btnCopy.className = 'btn btn-secondary';
+  btnCopy.textContent = 'Copy story';
+  btnCopy.addEventListener('click', () => {
+    navigator.clipboard.writeText(storySentences.join(' '));
+    btnCopy.textContent = 'Copied ✓';
+    setTimeout(() => btnCopy.textContent = 'Copy story', 2000);
+  });
+
+  actions.appendChild(btnMore);
+  actions.appendChild(btnCopy);
+}
+
+// ── HELPERS ──────────────────────────────────────────────────────────
+function showPhase(id) {
+  document.querySelectorAll('.phase').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function restart() {
+  selectedWord = null;
+  currentLayer = 0;
+  sentenceParts = { article:'', adjective:'', noun:'', verb:'', adverb:'', clause:'' };
+  builtSentences = [];
+  document.querySelectorAll('.word-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('btn-start').disabled = true;
+  showPhase('phase-choose');
+}
+
+init();
+</script>
+</body>
+</html>

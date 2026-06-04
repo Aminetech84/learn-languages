@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Story English MVP</title>
+<style>
+body{
+    font-family: Arial, sans-serif;
+    background:#f4f4f4;
+    margin:0;
+    padding:20px;
+    color:#222;
+}
+.container{
+    max-width:900px;
+    margin:auto;
+    background:white;
+    padding:24px;
+    border-radius:12px;
+    box-shadow:0 2px 10px rgba(0,0,0,0.1);
+}
+h1{
+    margin-top:0;
+}
+.section{
+    margin-bottom:28px;
+}
+.story-box{
+    background:#fafafa;
+    border:1px solid #ddd;
+    padding:18px;
+    border-radius:10px;
+    line-height:1.8;
+    font-size:18px;
+}
+select{
+    padding:8px;
+    margin:0 4px;
+    border-radius:6px;
+    border:1px solid #bbb;
+}
+button{
+    padding:10px 16px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    font-size:16px;
+}
+.primary{
+    background:#222;
+    color:white;
+}
+.output{
+    background:#eef7ee;
+    border:1px solid #a7d7a7;
+    padding:16px;
+    border-radius:10px;
+    min-height:60px;
+    font-size:18px;
+}
+.small{
+    color:#666;
+    font-size:14px;
+}
+.card{
+    border:1px solid #ddd;
+    padding:14px;
+    border-radius:10px;
+    margin-top:10px;
+    background:#fcfcfc;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<h1>📘 Story English MVP</h1>
+<p class="small">
+Goal: Build confidence using a small core vocabulary and simple story structures.
+</p>
+
+<div class="section">
+<h2>1. Build a Story</h2>
+
+<div class="story-box">
+Today I
+<select id="verb1">
+    <option>went to</option>
+    <option>walked to</option>
+    <option>ran to</option>
+    <option>looked for</option>
+    <option>picked up</option>
+</select>
+
+<select id="place">
+    <option>school</option>
+    <option>the market</option>
+    <option>the park</option>
+    <option>my friend's house</option>
+</select>.
+
+Then I
+<select id="verb2">
+    <option>saw</option>
+    <option>helped</option>
+    <option>met</option>
+    <option>called</option>
+</select>
+
+<select id="person">
+    <option>my friend</option>
+    <option>a teacher</option>
+    <option>my brother</option>
+    <option>a stranger</option>
+</select>.
+
+Because I was
+<select id="emotion">
+    <option>happy</option>
+    <option>tired</option>
+    <option>late</option>
+    <option>hungry</option>
+</select>,
+
+I
+<select id="ending">
+    <option>went home</option>
+    <option>ate food</option>
+    <option>studied English</option>
+    <option>took a break</option>
+</select>.
+</div>
+
+<br>
+
+<button class="primary" onclick="generateStory()">Generate Story</button>
+</div>
+
+<div class="section">
+<h2>2. Your Story</h2>
+<div id="output" class="output">
+Your story will appear here...
+</div>
+</div>
+
+<div class="section">
+<h2>3. Word Expansion</h2>
+
+<div class="card">
+<strong>help</strong><br>
+help → helpful → helpless → helper
+</div>
+
+<div class="card">
+<strong>move</strong><br>
+move → movement → movable
+</div>
+
+<div class="card">
+<strong>happy</strong><br>
+happy → unhappy → happiness
+</div>
+
+</div>
+
+<div class="section">
+<h2>4. Phrasal Verb Boost</h2>
+
+<div class="card">
+pick up = take something from a surface
+</div>
+
+<div class="card">
+look for = try to find
+</div>
+
+<div class="card">
+run into = meet unexpectedly
+</div>
+
+</div>
+
+</div>
+
+<script>
+function generateStory(){
+    const verb1 = document.getElementById("verb1").value;
+    const place = document.getElementById("place").value;
+    const verb2 = document.getElementById("verb2").value;
+    const person = document.getElementById("person").value;
+    const emotion = document.getElementById("emotion").value;
+    const ending = document.getElementById("ending").value;
+
+    const story = `
+Today I ${verb1} ${place}. 
+Then I ${verb2} ${person}. 
+Because I was ${emotion}, I ${ending}.
+`;
+
+    document.getElementById("output").innerText = story;
+}
+</script>
+
+</body>
+</html>
