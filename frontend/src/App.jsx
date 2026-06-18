@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
-import App2 from './vers/CoreLangStory';
-import App1 from './vers/glue-words';
+
+import CoreLang from './vers/corelang';
 import './App.css'
 
 
@@ -8,7 +8,18 @@ function App() {
 
   return (
     <>
-    <BrowserRouter>
+     <CoreLang />
+
+    </>
+  )
+}
+
+export default App
+
+
+/***
+ * 
+ *  <BrowserRouter>
       <nav>
         <Link to="/corel">Story</Link> |{" "}
         <Link to="/glue">Glue Words</Link>
@@ -19,9 +30,8 @@ function App() {
         <Route path="/glue" element={<App1 />} />
       </Routes>
     </BrowserRouter>
-
-    </>
-  )
-}
-
-export default App
+ * 
+ * 
+ *  * 
+ * 
+ */
