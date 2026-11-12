@@ -1,732 +1,325 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 
-// ─── PALETTE ────────────────────────────────────────────────────────────────
-const BG      = "#07101A";
-const SURF    = "#0D1B28";
-const CARD    = "#132333";
-const BORDER  = "#1A3045";
-const ACCENT  = "#2E86AB";
-const GREEN   = "#4ADE80";
-const PURPLE  = "#8B5CF6";
-const EMERALD = "#10B981";
-const TEXT    = "#D8E8F2";
-const MUTED   = "#4A6478";
-const GOLD    = "#F59E0B";
+// CoreLang — a word grows into a sentence across three phases: roots → phrasal verbs → morphology.
+// In each sentence, [text|key] marks a newly added word; the key is the tap hint.
 
-// ─── WORD BANK ───────────────────────────────────────────────────────────────
-const WORDS = [
-  { id:"woman", en:"woman", ar:"امرأة", pos:"noun" },
-  { id:"child", en:"child", ar:"طفل",  pos:"noun" },
-  { id:"life",  en:"life",  ar:"حياة", pos:"noun" },
-  { id:"work",  en:"work",  ar:"عمل",  pos:"noun / verb" },
-  { id:"hope",  en:"hope",  ar:"أمل",  pos:"noun / verb" },
-  { id:"time",  en:"time",  ar:"وقت",  pos:"noun" },
+const CSS = `:root{
+  --bg:#07101A; --surf:#0D1B28; --card:#132333; --border:#1A3045;
+  --accent:#2E86AB; --green:#4ADE80; --purple:#8B5CF6; --emerald:#10B981;
+  --text:#D8E8F2; --muted:#4A6478; --gold:#F59E0B;
+}
+.cl,.cl *{box-sizing:border-box;}
+.cl{min-height:100vh;
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:'Inter',-apple-system,sans-serif;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+.cl-app{max-width:460px; margin:0 auto; padding:0 20px; min-height:100vh;}
+button{font-family:inherit; outline:none;}
+.row{display:flex; align-items:center;}
+.col{display:flex; flex-direction:column;}
+.between{justify-content:space-between;}
+.wrap{flex-wrap:wrap;}
+.screen{display:flex; flex-direction:column; min-height:100vh; padding-top:36px; padding-bottom:48px;}
+.screen.split{justify-content:space-between;}
+.logo{display:flex; align-items:center; gap:8px;}
+.logo .mark{width:25px; height:25px; background:var(--accent); border-radius:6px; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:13px;}
+.logo.small .mark{width:21px; height:21px; font-size:11px; border-radius:5px;}
+.logo span.name{font-weight:700; font-size:18px; letter-spacing:-0.5px;}
+.logo.small span.name{font-size:15px;}
+.logo .name b{color:var(--accent); font-weight:700;}
+.btn{padding:14px 28px; border-radius:10px; font-weight:600; font-size:15px; border:none; cursor:pointer; color:#fff; width:100%; letter-spacing:-0.2px; transition:opacity .15s;}
+.btn:active{opacity:.8;}
+.btn.ghost{background:transparent !important; border:1px solid;}
+.bar{background:var(--border); border-radius:99px; height:3px; overflow:hidden;}
+.bar > div{height:100%; border-radius:99px; transition:width .4s ease;}
+.tag{border-radius:99px; padding:3px 10px; font-size:11px; font-weight:700; letter-spacing:.5px; text-transform:uppercase;}
+.divider{height:1px; background:var(--border); margin:24px 0;}
+.eyebrow{font-size:11px; font-weight:700; letter-spacing:2px; text-transform:uppercase; margin-bottom:16px;}
+.card{background:var(--card); border-radius:12px; border:1px solid var(--border);}
+.surf{background:var(--surf); border-radius:16px; border:1px solid var(--border);}
+
+@keyframes newWord{ 0%{background:rgba(74,222,128,.22);} 100%{background:transparent;} }
+.new-word{color:var(--green); border-radius:4px; animation:newWord .8s ease;}
+.tap-word{text-decoration:underline dotted var(--muted); text-underline-offset:3px; cursor:pointer; border-radius:4px;}
+
+/* welcome */
+.stat{display:flex; flex-direction:column; gap:4px;}
+.stat .num{font-size:26px; font-weight:800; color:#fff; letter-spacing:-1px;}
+.stat .lbl{font-size:11px; color:var(--muted);}
+.stat-div{width:1px; height:36px; background:var(--border);}
+
+/* word picker */
+.word-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+.word-card{background:var(--card); border:1.5px solid var(--border); border-radius:14px; padding:20px 16px; text-align:left; cursor:pointer;}
+.word-card.active{background:rgba(46,134,171,.13); border-color:var(--accent);}
+.word-card .en{font-size:22px; font-weight:800; color:#fff; letter-spacing:-0.5px;}
+.word-card.active .en{color:var(--accent);}
+.word-card .ar{font-size:16px; color:var(--muted); margin-top:4px; direction:rtl;}
+.word-card .pos{font-size:10px; color:var(--muted); margin-top:8px; text-transform:uppercase; letter-spacing:.5px;}
+
+/* story */
+.sentence{font-size:22px; font-weight:600; line-height:1.6; margin:0; letter-spacing:-.3px;}
+.tooltip{padding:12px 16px; margin-bottom:20px; gap:8px;}
+.hint{gap:6px; margin-bottom:20px; font-size:12px; color:var(--muted); font-style:italic;}
+.instruction{padding:12px 16px; margin-bottom:28px; font-size:13px; color:var(--muted); line-height:1.6;}
+
+/* know it */
+.mark-row{gap:8px;}
+.mark-btn{flex:1; padding:10px 0; border-radius:8px; border:1.5px solid var(--border); background:var(--card); color:var(--muted); font-size:12px; font-weight:600; cursor:pointer;}
+
+/* complete */
+.pill{padding:6px 14px; border-radius:99px; font-size:12px; font-weight:600; border:1px solid var(--border); background:var(--card); color:var(--muted);}`;
+
+const ACCENT="#2E86AB", GREEN="#4ADE80", PURPLE="#8B5CF6", EMERALD="#10B981", MUTED="#4A6478", GOLD="#F59E0B", BORDER="#1A3045", CARD="#132333";
+
+const WORDS=[
+ {id:"woman",en:"woman",ar:"امرأة",pos:"noun"},
+ {id:"child",en:"child",ar:"طفل",pos:"noun"},
+ {id:"life",en:"life",ar:"حياة",pos:"noun"},
+ {id:"work",en:"work",ar:"عمل",pos:"noun / verb"},
+ {id:"hope",en:"hope",ar:"أمل",pos:"noun / verb"},
+ {id:"time",en:"time",ar:"وقت",pos:"noun"},
 ];
 
-// ─── STORY DATA ──────────────────────────────────────────────────────────────
-// Each step: spans[] = { t: text, new?: true, key?: string for tooltip }
-const STORIES = {
-  woman: {
-    nextWord:"child",
-    mission:'Use "woman" once today — in a message, a call, or even your own thoughts.',
-    checkinResponses:{
-      yes:"That's the whole point. The word is yours now.",
-      almost:"Almost counts. Tomorrow, it becomes easier.",
-      no:"That's honest. Today's word is waiting for you.",
-    },
-    drafts:[
-      { id:0, label:"Draft 1", sub:"Root verbs", color:ACCENT,
-        steps:[
-          { spans:[{t:"woman",n:true,k:"anchor · noun"}], hint:"anchor · noun" },
-          { spans:[{t:"The "},{t:"woman",k:"noun"}], hint:"The · determiner" },
-          { spans:[{t:"The "},{t:"young ",n:true,k:"young · adjective"},{t:"woman"}], hint:"young · adjective" },
-          { spans:[{t:"The young woman "},{t:"goes",n:true,k:"goes · verb root"}], hint:"goes · verb root" },
-          { spans:[{t:"The young woman goes "},{t:"to work",n:true,k:"to work · destination phrase"}], hint:"to work · destination" },
-          { spans:[{t:"The young woman goes to work "},{t:"happily",n:true,k:"happily · adverb of manner"}], hint:"happily · adverb" },
-          { spans:[{t:"The young woman goes to work happily "},{t:"all day long.",n:true,k:"all day long · time phrase"}], hint:"all day long · time phrase" },
-        ]},
-      { id:1, label:"Draft 2", sub:"Phrasal verbs", color:PURPLE,
-        steps:[
-          { spans:[{t:"The young woman "},{t:"carries on",n:true,k:"carries on · phrasal verb (= continues)"},{t:" working happily all day long."}], hint:"carries on · phrasal verb swap" },
-          { spans:[{t:"The young woman carries on working "},{t:"quietly",n:true,k:"quietly · manner adverb"},{t:" all day long."}], hint:"quietly · new adverb" },
-          { spans:[{t:"The young woman carries on working quietly, "},{t:"day after day.",n:true,k:"day after day · rhythm phrase"}], hint:"day after day · rhythm phrase" },
-        ]},
-      { id:2, label:"Draft 3", sub:"Morphology", color:EMERALD,
-        steps:[
-          { spans:[{t:"The young woman carries on working "},{t:"tirelessly",n:true,k:"tire + less + ly · affix chain"},{t:", day after day."}], hint:"tire + less + ly" },
-          { spans:[{t:"The young woman carries on working tirelessly, day after day, "},{t:"unbothered.",n:true,k:"un + bother + ed · prefix + suffix"}], hint:"un + bother + ed" },
-        ]},
-    ]},
+// sentence helpers: [text|key] marks a new word; p1 grows chunk by chunk
+const BRK=/\[([^\]|]+)\|([^\]]+)\]|([^\[]+)/g;
+function T(s){const spans=[],hs=[];let m;BRK.lastIndex=0;while((m=BRK.exec(s))){if(m[1]){spans.push({t:m[1],n:1,k:m[2]});hs.push(m[2]);}else spans.push({t:m[3]});}return{spans,hint:hs.join(" / ")};}
+function P1(a){const plain=[a[0].replace(/\[([^\]|]+)\|[^\]]+\]/g,"$1")],steps=[T(a[0])];for(let i=1;i<a.length;i++){const[c,k]=a[i].split("|");steps.push({spans:[{t:plain.join(" ")+" "},{t:c,n:1,k}],hint:k});plain.push(c);}return steps;}
+function D(id,ak,p1,p2,p3){return[
+ {id:0,label:"Phase 1",sub:"Roots",color:ACCENT,steps:[{spans:[{t:id,n:1,k:ak}],hint:ak},...P1(p1)]},
+ {id:1,label:"Phase 2",sub:"Phrasal verbs",color:PURPLE,steps:p2.map(T)},
+ {id:2,label:"Phase 3",sub:"Morphology",color:EMERALD,steps:p3.map(T)}];}
 
-  child:{
-    nextWord:"hope",
-    mission:'Use "child" once today — in a message, a story you tell, or a memory.',
-    checkinResponses:{
-      yes:"One word at a time. You're building something real.",
-      almost:"Close enough. The habit is forming.",
-      no:"No pressure. It'll come naturally — keep going.",
-    },
-    drafts:[
-      { id:0, label:"Draft 1", sub:"Root verbs", color:ACCENT,
-        steps:[
-          { spans:[{t:"child",n:true,k:"anchor · noun"}], hint:"anchor · noun" },
-          { spans:[{t:"A "},{t:"child",k:"noun"}], hint:"A · indefinite article" },
-          { spans:[{t:"A "},{t:"small ",n:true,k:"small · adjective"},{t:"child"}], hint:"small · adjective" },
-          { spans:[{t:"A small child "},{t:"sits",n:true,k:"sits · verb root"}], hint:"sits · verb root" },
-          { spans:[{t:"A small child sits "},{t:"alone",n:true,k:"alone · adverb"}], hint:"alone · adverb" },
-          { spans:[{t:"A small child sits alone "},{t:"and waits.",n:true,k:"and · coordinating conjunction"}], hint:"and · connector" },
-          { spans:[{t:"A small child sits alone and waits "},{t:"in the quiet.",n:true,k:"in · preposition · sets the scene"}], hint:"in the quiet · setting" },
-        ]},
-      { id:1, label:"Draft 2", sub:"Phrasal verbs", color:PURPLE,
-        steps:[
-          { spans:[{t:"A small child "},{t:"holds on",n:true,k:"holds on · phrasal verb (= persists)"},{t:" and waits in the quiet."}], hint:"holds on · phrasal verb" },
-          { spans:[{t:"A small child holds on and waits, "},{t:"very still,",n:true,k:"very still · intensifier phrase"},{t:" in the quiet."}], hint:"very still · intensifier" },
-        ]},
-      { id:2, label:"Draft 3", sub:"Morphology", color:EMERALD,
-        steps:[
-          { spans:[{t:"A small child holds on and waits, "},{t:"motionless,",n:true,k:"motion + less · noun → adjective"},{t:" in the quiet."}], hint:"motion + less" },
-          { spans:[{t:"A small child holds on and waits, motionless, in the "},{t:"stillness.",n:true,k:"still + ness · adjective → noun"}], hint:"still + ness" },
-        ]},
-    ]},
-
-  hope:{
-    nextWord:"time",
-    mission:'Use "hope" once today — say it out loud, write it, or use it to describe something real.',
-    checkinResponses:{
-      yes:"That's the habit. Small activations compound.",
-      almost:"That still counts. The word is moving from passive to active.",
-      no:"Honest. Try again today — just once is enough.",
-    },
-    drafts:[
-      { id:0, label:"Draft 1", sub:"Root verbs", color:ACCENT,
-        steps:[
-          { spans:[{t:"hope",n:true,k:"anchor · noun / verb"}], hint:"anchor · noun/verb" },
-          { spans:[{t:"Real "},{t:"hope",k:"noun"}], hint:"Real · adjective" },
-          { spans:[{t:"Real hope "},{t:"does not",n:true,k:"does not · negation structure"},{t:" leave."}], hint:"does not · negation" },
-          { spans:[{t:"Real hope does not "},{t:"leave.",n:true,k:"leave · verb root"}], hint:"leave · verb root" },
-          { spans:[{t:"Real hope does not leave. "},{t:"It waits,",n:true,k:"It · pronoun reference (= hope)"}], hint:"It · pronoun" },
-          { spans:[{t:"Real hope does not leave. It waits, "},{t:"quietly,",n:true,k:"quietly · manner adverb"}], hint:"quietly · adverb" },
-          { spans:[{t:"Real hope does not leave. It waits, quietly, "},{t:"until you return.",n:true,k:"until · subordinating conjunction"}], hint:"until · subordinator" },
-        ]},
-      { id:1, label:"Draft 2", sub:"Phrasal verbs", color:PURPLE,
-        steps:[
-          { spans:[{t:"Real hope does not "},{t:"give up.",n:true,k:"give up · phrasal verb (= surrender)"},{t:" It waits, quietly, until you return."}], hint:"give up · phrasal verb" },
-          { spans:[{t:"Real hope does not give up. It "},{t:"holds on,",n:true,k:"holds on · phrasal verb (= persists)"},{t:" quietly, until you return."}], hint:"holds on · persistence" },
-        ]},
-      { id:2, label:"Draft 3", sub:"Morphology", color:EMERALD,
-        steps:[
-          { spans:[{t:"Real hope does not give up. It holds on, "},{t:"steadfastly,",n:true,k:"steadfast + ly · adjective → adverb"},{t:" until you return."}], hint:"steadfast + ly" },
-          { spans:[{t:"Real hope does not give up. It holds on, steadfastly, "},{t:"unbroken.",n:true,k:"un + break + en · prefix + past participle"}], hint:"un + break + en" },
-        ]},
-    ]},
-
-  life:{
-    nextWord:"work",
-    mission:'Use "life" once today — in a sentence that means something to you.',
-    checkinResponses:{
-      yes:"The best way to learn a word is to mean it.",
-      almost:"That's closer than it sounds. Keep going.",
-      no:"Try it once today. Just once. No pressure.",
-    },
-    drafts:[
-      { id:0, label:"Draft 1", sub:"Root verbs", color:ACCENT,
-        steps:[
-          { spans:[{t:"life",n:true,k:"anchor · noun"}], hint:"anchor · noun" },
-          { spans:[{t:"A good "},{t:"life",k:"noun"}], hint:"A good · determiner + adjective" },
-          { spans:[{t:"A good life "},{t:"takes",n:true,k:"takes · verb root (= requires)"}], hint:"takes · verb root" },
-          { spans:[{t:"A good life takes "},{t:"time",n:true,k:"time · noun object"}], hint:"time · object" },
-          { spans:[{t:"A good life takes time "},{t:"to build.",n:true,k:"to build · infinitive of purpose"}], hint:"to build · infinitive" },
-          { spans:[{t:"A good life takes time to build, "},{t:"slowly.",n:true,k:"slowly · manner adverb"}], hint:"slowly · adverb" },
-          { spans:[{t:"A good life takes time to build, slowly, "},{t:"day by day.",n:true,k:"day by day · rhythm phrase"}], hint:"day by day · rhythm" },
-        ]},
-      { id:1, label:"Draft 2", sub:"Phrasal verbs", color:PURPLE,
-        steps:[
-          { spans:[{t:"A good life "},{t:"comes together",n:true,k:"comes together · phrasal verb (= assembles)"},{t:" slowly, day by day."}], hint:"comes together · phrasal verb" },
-          { spans:[{t:"A good life comes together slowly, "},{t:"piece by piece,",n:true,k:"piece by piece · rhythm phrase"},{t:" day by day."}], hint:"piece by piece · rhythm" },
-        ]},
-      { id:2, label:"Draft 3", sub:"Morphology", color:EMERALD,
-        steps:[
-          { spans:[{t:"A good life comes together slowly, piece by piece, "},{t:"gradually.",n:true,k:"gradual + ly · adjective → adverb"}], hint:"gradual + ly" },
-          { spans:[{t:"A good life comes together gradually, piece by piece — "},{t:"unhurried.",n:true,k:"un + hurry + ed · prefix + suffix"}], hint:"un + hurry + ed" },
-        ]},
-    ]},
-
-  work:{
-    nextWord:"woman",
-    mission:'Use "work" once today — describe something you\'re doing, or something you value about it.',
-    checkinResponses:{
-      yes:"The word is no longer abstract. It belongs to a moment now.",
-      almost:"That's still activation. It counts.",
-      no:"No worries. Today is another chance.",
-    },
-    drafts:[
-      { id:0, label:"Draft 1", sub:"Root verbs", color:ACCENT,
-        steps:[
-          { spans:[{t:"work",n:true,k:"anchor · noun / verb"}], hint:"anchor · noun/verb" },
-          { spans:[{t:"Good "},{t:"work",k:"noun"}], hint:"Good · adjective" },
-          { spans:[{t:"Good work "},{t:"never",n:true,k:"never · adverb of frequency"},{t:" lies."}], hint:"never · frequency adverb" },
-          { spans:[{t:"Good work never "},{t:"lies.",n:true,k:"lies · verb root (= deceives)"}], hint:"lies · verb root" },
-          { spans:[{t:"Good work never lies. "},{t:"It stays.",n:true,k:"It · pronoun reference (= good work)"}], hint:"It · pronoun" },
-          { spans:[{t:"Good work never lies. It stays "},{t:"long after",n:true,k:"long after · time phrase"},{t:" you go."}], hint:"long after · time" },
-          { spans:[{t:"Good work never lies. It stays long after "},{t:"you go.",n:true,k:"you go · subject + verb = departure"}], hint:"you go · closure" },
-        ]},
-      { id:1, label:"Draft 2", sub:"Phrasal verbs", color:PURPLE,
-        steps:[
-          { spans:[{t:"Good work never lies. It "},{t:"lives on",n:true,k:"lives on · phrasal verb (= continues to exist)"},{t:" long after you go."}], hint:"lives on · phrasal verb" },
-          { spans:[{t:"Good work never lies. It lives on, "},{t:"quietly,",n:true,k:"quietly · manner adverb"},{t:" long after you go."}], hint:"quietly · adverb" },
-        ]},
-      { id:2, label:"Draft 3", sub:"Morphology", color:EMERALD,
-        steps:[
-          { spans:[{t:"Good work never lies. It lives on, "},{t:"silently,",n:true,k:"silent + ly · adjective → adverb"},{t:" long after you go."}], hint:"silent + ly" },
-          { spans:[{t:"Good work never lies. It lives on, silently, "},{t:"undeniable.",n:true,k:"un + deny + able · prefix chain"}], hint:"un + deny + able" },
-        ]},
-    ]},
-
-  time:{
-    nextWord:"life",
-    mission:'Use "time" once today — say something true about it.',
-    checkinResponses:{
-      yes:"The word is active now. That's the whole mechanism.",
-      almost:"Almost active. The gap between 'seen' and 'said' is small — keep going.",
-      no:"Time is patient. Try once more today.",
-    },
-    drafts:[
-      { id:0, label:"Draft 1", sub:"Root verbs", color:ACCENT,
-        steps:[
-          { spans:[{t:"time",n:true,k:"anchor · noun"}], hint:"anchor · noun" },
-          { spans:[{t:"All "},{t:"time",k:"noun"}], hint:"All · universal quantifier" },
-          { spans:[{t:"All time "},{t:"moves",n:true,k:"moves · verb root"}], hint:"moves · verb root" },
-          { spans:[{t:"All time moves "},{t:"forward.",n:true,k:"forward · direction adverb"}], hint:"forward · direction" },
-          { spans:[{t:"All time moves forward. "},{t:"We go",n:true,k:"We · first person plural"},{t:" with it."}], hint:"We · subject" },
-          { spans:[{t:"All time moves forward. We go with it, "},{t:"whether we want to",n:true,k:"whether · concession clause"},{t:" or not."}], hint:"whether · concession" },
-          { spans:[{t:"All time moves forward. We go with it, whether we want to or not, "},{t:"always.",n:true,k:"always · frequency adverb"}], hint:"always · adverb" },
-        ]},
-      { id:1, label:"Draft 2", sub:"Phrasal verbs", color:PURPLE,
-        steps:[
-          { spans:[{t:"All time "},{t:"moves on.",n:true,k:"moves on · phrasal verb (= continues forward)"},{t:" We go with it, always."}], hint:"moves on · phrasal verb" },
-          { spans:[{t:"All time moves on. We "},{t:"go along",n:true,k:"go along · phrasal verb (= comply, accompany)"},{t:" with it, always."}], hint:"go along · phrasal verb" },
-        ]},
-      { id:2, label:"Draft 3", sub:"Morphology", color:EMERALD,
-        steps:[
-          { spans:[{t:"All time moves on. We go along with it, "},{t:"willingly",n:true,k:"willing + ly · adjective → adverb"},{t:" or not, always."}], hint:"willing + ly" },
-          { spans:[{t:"All time moves on. We go along with it, willingly or not, always — "},{t:"unstoppable.",n:true,k:"un + stop + able · prefix chain"}], hint:"un + stop + able" },
-        ]},
-    ]},
+const STORIES={
+ woman:{nextWord:"child",mission:'Use "woman" once today — in a message, a call, or even your own thoughts.',
+  checkinResponses:{yes:"That's the whole point. The word is yours now.",almost:"Almost counts. Tomorrow, it becomes easier.",no:"That's honest. Today's word is waiting for you."},
+  drafts:D("woman","anchor · noun",
+ ["[The|The · determiner] woman","makes food,|makes · verb root","sits with her child,|sits with · verb + preposition","and tells|and · connector / tells · verb root","a story.|a story · determiner + noun"],
+ ["The woman makes food, sits [down|sits down · phrasal verb (= takes a seat)] with her child, and tells a story.","The woman makes food, sits down with her child, and [reads out|reads out · phrasal verb (= says aloud)] a story."],
+ ["The woman makes food, sits down with her child, and [happily|happy + ly · adjective → adverb] reads out a story.","The woman makes food, sits down with her child, and happily reads out a story, like a [storyteller|story + tell + er · compound + suffix]."])},
+ child:{nextWord:"hope",mission:'Use "child" once today — in a message, a story you tell, or a memory.',
+  checkinResponses:{yes:"One word at a time. You're building something real.",almost:"Close enough. The habit is forming.",no:"No pressure. It'll come naturally — keep going."},
+  drafts:D("child","anchor · noun",
+ ["[The|The · determiner] child","runs|runs · verb root","to the door|to the door · direction phrase","and calls|and · connector / calls · verb root","his mother.|his mother · possessive + noun"],
+ ["The child runs [in|runs in · phrasal verb (= enters quickly)] through the door and calls his mother.","The child runs in through the door and calls [out|calls out · phrasal verb (= shouts)] for his mother."],
+ ["The child runs in through the door and calls out [happily|happy + ly · adjective → adverb] for his mother.","The child runs in through the door and calls out happily for his mother, [unafraid|un + afraid · negative prefix] of the dark."])},
+ hope:{nextWord:"time",mission:'Use "hope" once today — say it out loud, write it, or use it to describe something real.',
+  checkinResponses:{yes:"That's the habit. Small activations compound.",almost:"That still counts. The word is moving from passive to active.",no:"Honest. Try again today — just once is enough."},
+  drafts:D("hope","anchor · noun / verb",
+ ["[I|I · subject pronoun] hope","my father|my father · possessive + noun","comes in a week,|comes · verb root / in a week · time phrase","so we can|so · result connector / we can · subject + modal","go together.|go · verb root / together · adverb"],
+ ["I hope my father [comes back|comes back · phrasal verb (= returns)] in a week, so we can go together.","I hope my father comes back in a week, so we can [go out|go out · phrasal verb (= leave the house for fun)] together."],
+ ["[Hopefully|hope + ful + ly · noun → adjective → adverb] my father comes back in a week, so we can go out together.","Hopefully my father comes back in a week, so we can go out together and be [happier|happy + er · comparative]."])},
+ life:{nextWord:"work",mission:'Use "life" once today — in a sentence that means something to you.',
+  checkinResponses:{yes:"The best way to learn a word is to mean it.",almost:"That's closer than it sounds. Keep going.",no:"Try it once today. Just once. No pressure."},
+  drafts:D("life","anchor · noun",
+ ["Life [is|is · linking verb]","hard,|hard · adjective","but a good friend|but · contrast connector / good friend · adjective + noun","helps.|helps · verb root"],
+ ["Life is hard, but a good friend helps you [out|helps out · phrasal verb (= supports)].","Life is hard, but a good friend helps you out and [keeps you going|keeps going · phrasal verb (= continues)]."],
+ ["Life is hard, but a good [friendship|friend + ship · noun → abstract noun] helps you out and keeps you going.","Life is hard, but a good friendship helps you out and gives you the [strength|strong → strength · adjective → noun] to keep going."])},
+ work:{nextWord:"woman",mission:'Use "work" once today — describe something you\'re doing, or something you value about it.',
+  checkinResponses:{yes:"The word is no longer abstract. It belongs to a moment now.",almost:"That's still activation. It counts.",no:"No worries. Today is another chance."},
+  drafts:D("work","anchor · noun / verb",
+ ["[I go to|I go to · subject + verb + direction] work","early|early · adverb of time","and come back|and · connector / come back · verb + direction word","late.|late · adverb of time"],
+ ["I go [in|go in · phrasal verb (= arrive at a place)] to work early and come back late.","I [get up|get up · phrasal verb (= leave your bed)] early, go in to work, and come back late."],
+ ["I get up early, go in to my [workplace|work + place · compound noun], and come back late.","I get up early, go in to my workplace, and come back [later|late + er · comparative] than my [coworkers|co + work + er · prefix + suffix]."])},
+ time:{nextWord:"life",mission:'Use "time" once today — say something true about it.',
+  checkinResponses:{yes:"The word is active now. That's the whole mechanism.",almost:"Almost active. The gap between 'seen' and 'said' is small — keep going.",no:"Time is patient. Try once more today."},
+  drafts:D("time","anchor · noun",
+ ["[I never have|I never have · subject + adverb + verb] time","for my friends.|for my friends · preposition phrase"],
+ ["I never have time [to meet up|meet up · phrasal verb (= get together)] with my friends."],
+ ["I never have time to meet up with my friends, so our [friendship|friend + ship · noun → abstract noun] grows [weaker|weak + er · comparative].","I never have time to meet up with my friends, so our friendship grows weaker, [sadly|sad + ly · adjective → adverb]."])},
 };
 
-// ─── HELPERS ─────────────────────────────────────────────────────────────────
-const px = (n) => `${n}px`;
-const row = (extra={}) => ({ display:"flex", alignItems:"center", ...extra });
-const col = (extra={}) => ({ display:"flex", flexDirection:"column", ...extra });
+const INIT={screen:"welcome",anchor:null,draftIdx:0,stepIdx:0,tooltip:null,marks:{},ans:null,pick:null};
+const H1={fontSize:40,fontWeight:800,lineHeight:1.1,letterSpacing:-1.5,margin:0};
 
-// ─── BASE COMPONENTS ─────────────────────────────────────────────────────────
-function Shell({ children }) {
-  return (
-    <div style={{ background:BG, minHeight:"100vh", fontFamily:"'Inter',-apple-system,sans-serif", color:TEXT, overflowX:"hidden" }}>
-      <div style={{ maxWidth:460, margin:"0 auto", padding:"0 20px" }}>
-        {children}
-      </div>
-    </div>
-  );
-}
+const Logo=({small})=>(<div className={"logo"+(small?" small":"")}><div className="mark">C</div><span className="name">Core<b>Lang</b></span></div>);
+const Btn=({label,onClick,color})=>(<button className="btn" style={{background:color}} onClick={onClick}>{label}</button>);
 
-function Logo({ small }) {
-  const s = small ? 15 : 18;
-  return (
-    <div style={row({ gap:8 })}>
-      <div style={{ width:s*1.4, height:s*1.4, background:ACCENT, borderRadius:px(s*0.25), display:"flex", alignItems:"center", justifyContent:"center" }}>
-        <span style={{ color:"#fff", fontSize:px(s*0.7), fontWeight:800, letterSpacing:"-0.5px" }}>C</span>
-      </div>
-      <span style={{ fontWeight:700, fontSize:px(s), letterSpacing:"-0.5px" }}>
-        Core<span style={{ color:ACCENT }}>Lang</span>
-      </span>
-    </div>
-  );
-}
+export default function CoreLang(){
+  const [S,setS]=useState(INIT);
+  const up=(p)=>setS(s=>({...s,...p}));
+  useEffect(()=>{window.scrollTo(0,0);},[S.screen,S.draftIdx,S.stepIdx]);
 
-function Btn({ children, onClick, color=ACCENT, ghost=false, full=false, size="md" }) {
-  const [hover, setHover] = useState(false);
-  const pad = size==="sm" ? "10px 18px" : "14px 28px";
-  const fs  = size==="sm" ? 13 : 15;
-  const bg  = ghost ? "transparent" : hover ? color+"DD" : color;
-  const bdr = ghost ? `1px solid ${color}50` : "none";
-  return (
-    <button
-      onClick={onClick}
-      onMouseEnter={()=>setHover(true)}
-      onMouseLeave={()=>setHover(false)}
-      style={{
-        padding:pad, borderRadius:px(10), fontWeight:600, fontSize:px(fs),
-        border:bdr, cursor:"pointer", background:bg, color:ghost?color:"#fff",
-        width:full?"100%":"auto", transition:"all 0.15s", outline:"none",
-        letterSpacing:"-0.2px",
-      }}
-    >{children}</button>
-  );
-}
+  const story=S.anchor?STORIES[S.anchor]:null;
+  const draft=story?story.drafts[S.draftIdx]:null;
+  const isLastDraft=story?S.draftIdx===story.drafts.length-1:false;
 
-function Bar({ current, total, color=ACCENT }) {
-  return (
-    <div style={{ background:BORDER, borderRadius:99, height:3, overflow:"hidden" }}>
-      <div style={{ height:"100%", background:color, borderRadius:99, width:`${Math.round((current/total)*100)}%`, transition:"width 0.4s ease" }}/>
-    </div>
-  );
-}
+  const storyNext=()=>S.stepIdx<draft.steps.length-1?up({stepIdx:S.stepIdx+1,tooltip:null}):up({screen:"knowit"});
+  const nextDraft=()=>up({draftIdx:S.draftIdx+1,stepIdx:0,tooltip:null,screen:"story"});
 
-function Tag({ label, color }) {
-  return (
-    <span style={{ background:color+"22", color, borderRadius:99, padding:"3px 10px", fontSize:11, fontWeight:700, letterSpacing:"0.5px", textTransform:"uppercase" }}>
-      {label}
-    </span>
-  );
-}
-
-function Divider() {
-  return <div style={{ height:1, background:BORDER, margin:"24px 0" }}/>;
-}
-
-// ─── SCREEN 1: WELCOME ───────────────────────────────────────────────────────
-function Welcome({ onStart }) {
-  return (
-    <Shell>
-      <div style={{ ...col({ justifyContent:"space-between", minHeight:"100vh", paddingTop:48, paddingBottom:48 }) }}>
+  const screens={
+    welcome:()=>(
+      <div className="screen split">
         <Logo/>
-        <div style={col({ gap:24 })}>
+        <div className="col" style={{gap:24}}>
           <div>
-            <div style={{ fontSize:11, fontWeight:700, letterSpacing:"2px", color:ACCENT, textTransform:"uppercase", marginBottom:16 }}>
-              A language engine
-            </div>
-            <h1 style={{ fontSize:40, fontWeight:800, lineHeight:1.1, letterSpacing:"-1.5px", margin:0, color:"#fff" }}>
-              We start<br/>with a word.
-            </h1>
-            <h1 style={{ fontSize:40, fontWeight:800, lineHeight:1.1, letterSpacing:"-1.5px", margin:0, marginTop:4 }}>
-              We reach a{" "}
-              <span style={{ color:ACCENT }}>story.</span>
-            </h1>
+            <div className="eyebrow" style={{color:ACCENT}}>A language engine</div>
+            <h1 style={{...H1,color:"#fff"}}>We start<br/>with a word.</h1>
+            <h1 style={{...H1,margin:"4px 0 0"}}>We reach a <span style={{color:ACCENT}}>story.</span></h1>
           </div>
-          <p style={{ fontSize:16, lineHeight:1.7, color:MUTED, margin:0, maxWidth:340 }}>
-            Pick one word you recognise. Watch a sentence grow from it — word by word, across three drafts.
-          </p>
-          <div style={row({ gap:24 })}>
-            <div style={col({ gap:4 })}>
-              <span style={{ fontSize:26, fontWeight:800, color:"#fff", letterSpacing:"-1px" }}>196</span>
-              <span style={{ fontSize:11, color:MUTED }}>root words</span>
-            </div>
-            <div style={{ width:1, height:36, background:BORDER }}/>
-            <div style={col({ gap:4 })}>
-              <span style={{ fontSize:26, fontWeight:800, color:"#fff", letterSpacing:"-1px" }}>1,200+</span>
-              <span style={{ fontSize:11, color:MUTED }}>words unlocked</span>
-            </div>
-            <div style={{ width:1, height:36, background:BORDER }}/>
-            <div style={col({ gap:4 })}>
-              <span style={{ fontSize:26, fontWeight:800, color:"#fff", letterSpacing:"-1px" }}>60 days</span>
-              <span style={{ fontSize:11, color:MUTED }}>to a full story</span>
-            </div>
+          <p style={{fontSize:16,lineHeight:1.7,color:MUTED,margin:0,maxWidth:340}}>Pick one word you recognise. Watch a sentence grow from it — word by word, across three drafts.</p>
+          <div className="row" style={{gap:24}}>
+            <div className="stat"><span className="num">196</span><span className="lbl">root words</span></div>
+            <div className="stat-div"/>
+            <div className="stat"><span className="num">1,200+</span><span className="lbl">words unlocked</span></div>
+            <div className="stat-div"/>
+            <div className="stat"><span className="num">60 days</span><span className="lbl">to a full story</span></div>
           </div>
         </div>
-        <Btn onClick={onStart} full>Begin →</Btn>
-      </div>
-    </Shell>
-  );
-}
+        <Btn label="Begin →" onClick={()=>up({screen:"picker"})} color={ACCENT}/>
+      </div>),
 
-// ─── SCREEN 2: WORD PICKER ───────────────────────────────────────────────────
-function WordPicker({ onPick }) {
-  const [selected, setSelected] = useState(null);
-  return (
-    <Shell>
-      <div style={{ paddingTop:40, paddingBottom:48 }}>
+    picker:()=>(
+      <div className="screen">
         <Logo small/>
-        <div style={{ marginTop:36, marginBottom:8, fontSize:22, fontWeight:800, letterSpacing:"-0.8px", color:"#fff" }}>
-          Which of these feels familiar?
+        <div style={{marginTop:36,marginBottom:8,fontSize:22,fontWeight:800,letterSpacing:-0.8,color:"#fff"}}>Which of these feels familiar?</div>
+        <p style={{fontSize:14,color:MUTED,margin:"0 0 32px"}}>Tap the word that comes closest to something you already know.</p>
+        <div className="word-grid">
+          {WORDS.map(w=>(
+            <button key={w.id} className={"word-card"+(S.pick===w.id?" active":"")} onClick={()=>up({pick:w.id})}>
+              <div className="en">{w.en}</div><div className="ar">{w.ar}</div><div className="pos">{w.pos}</div>
+            </button>))}
         </div>
-        <p style={{ fontSize:14, color:MUTED, margin:"0 0 32px" }}>
-          Tap the word that comes closest to something you already know.
-        </p>
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
-          {WORDS.map(w => {
-            const active = selected === w.id;
-            return (
-              <button
-                key={w.id}
-                onClick={() => setSelected(w.id)}
-                style={{
-                  background: active ? ACCENT+"22" : CARD,
-                  border: `1.5px solid ${active ? ACCENT : BORDER}`,
-                  borderRadius:14, padding:"20px 16px", cursor:"pointer",
-                  textAlign:"left", transition:"all 0.15s", outline:"none",
-                }}
-              >
-                <div style={{ fontSize:22, fontWeight:800, color: active ? ACCENT : "#fff", letterSpacing:"-0.5px" }}>{w.en}</div>
-                <div style={{ fontSize:16, color:MUTED, marginTop:4, fontFamily:"'Arabic UI Text', 'Segoe UI', sans-serif", direction:"rtl" }}>{w.ar}</div>
-                <div style={{ fontSize:10, color:MUTED, marginTop:8, textTransform:"uppercase", letterSpacing:"0.5px" }}>{w.pos}</div>
-              </button>
-            );
-          })}
+        <div style={{marginTop:28}}>
+          <Btn label={S.pick?`Start with "${S.pick}" →`:"Select a word to begin"} color={S.pick?ACCENT:MUTED}
+            onClick={()=>S.pick&&up({anchor:S.pick,draftIdx:0,stepIdx:0,screen:"story"})}/>
         </div>
-        <div style={{ marginTop:28 }}>
-          <Btn onClick={() => selected && onPick(selected)} full color={selected ? ACCENT : MUTED}>
-            {selected ? `Start with "${selected}" →` : "Select a word to begin"}
-          </Btn>
-        </div>
-      </div>
-    </Shell>
-  );
-}
+      </div>),
 
-// ─── SCREEN 3: STORY BUILDER ─────────────────────────────────────────────────
-function StoryBuilder({ anchor, draftIdx, stepIdx, onNext, onDraftDone }) {
-  const story  = STORIES[anchor];
-  const draft  = story.drafts[draftIdx];
-  const step   = draft.steps[stepIdx];
-  const isLast = stepIdx === draft.steps.length - 1;
-  const [tooltip, setTooltip] = useState(null);
-  const [anim, setAnim] = useState(false);
-  const prevStep = useRef(stepIdx);
+    story:()=>{
+      const step=draft.steps[S.stepIdx], isLast=S.stepIdx===draft.steps.length-1;
+      return (
+        <div className="screen">
+          <div className="row between" style={{marginBottom:20}}>
+            <Logo small/>
+            <span className="tag" style={{background:draft.color+"22",color:draft.color}}>{draft.label} · {draft.sub}</span>
+          </div>
+          <div className="bar"><div style={{width:Math.round((S.stepIdx+1)/draft.steps.length*100)+"%",background:draft.color}}/></div>
+          <div className="row between" style={{marginTop:8,marginBottom:32}}>
+            <span style={{fontSize:12,color:MUTED}}>Step {S.stepIdx+1} of {draft.steps.length}</span>
+            <span style={{fontSize:12,color:MUTED}}>Phase {S.draftIdx+1} of {story.drafts.length}</span>
+          </div>
+          <div className="surf" style={{padding:"28px 24px",marginBottom:20,minHeight:100}}>
+            <p className="sentence">
+              {step.spans.map((s,i)=>(
+                <span key={S.draftIdx+"-"+S.stepIdx+"-"+i} className={(s.n?"new-word ":"")+(s.k?"tap-word":"")}
+                  onClick={s.k?()=>up({tooltip:S.tooltip===s.k?null:s.k}):undefined}>{s.t}</span>))}
+            </p>
+          </div>
+          {S.tooltip
+            ? <div className="card tooltip row" style={{padding:"12px 16px",marginBottom:20}}><span style={{color:ACCENT}}>◈</span><span style={{fontSize:13}}>{S.tooltip}</span></div>
+            : step.hint ? <div className="row hint"><span>↳</span><span>{step.hint}</span></div> : null}
+          <div className="card instruction">{S.stepIdx===0?"Your anchor word. The story starts here.":"Tap the highlighted word to see how it fits into the structure."}</div>
+          <Btn label={isLast?"Complete this draft →":"Next word →"} onClick={storyNext} color={draft.color}/>
+        </div>);
+    },
 
-  useEffect(() => {
-    if (prevStep.current !== stepIdx) {
-      setAnim(true);
-      setTimeout(() => setAnim(false), 600);
-      prevStep.current = stepIdx;
-      setTooltip(null);
-    }
-  }, [stepIdx]);
-
-  const newSpan = step.spans.find(s => s.n);
-
-  return (
-    <Shell>
-      <div style={{ paddingTop:36, paddingBottom:48 }}>
-        {/* Header */}
-        <div style={row({ justifyContent:"space-between", marginBottom:20 })}>
+    knowit:()=>{
+      const opts=[{id:"know",label:"Know it",color:GREEN},{id:"seen",label:"Seen it",color:GOLD},{id:"new",label:"New to me",color:ACCENT}];
+      const newWords=draft.steps.flatMap(s=>s.spans.filter(sp=>sp.n&&sp.k)).map(sp=>({text:sp.t.trim().replace(/[.,]$/,""),key:sp.k}));
+      const marked=newWords.filter(w=>S.marks[w.text]).length, done=marked===newWords.length;
+      return (
+        <div className="screen">
           <Logo small/>
-          <Tag label={`${draft.label} · ${draft.sub}`} color={draft.color}/>
-        </div>
-
-        {/* Progress */}
-        <Bar current={stepIdx+1} total={draft.steps.length} color={draft.color}/>
-        <div style={{ ...row({ justifyContent:"space-between" }), marginTop:8, marginBottom:32 }}>
-          <span style={{ fontSize:12, color:MUTED }}>Step {stepIdx+1} of {draft.steps.length}</span>
-          <span style={{ fontSize:12, color:MUTED }}>Draft {draftIdx+1} of {story.drafts.length}</span>
-        </div>
-
-        {/* Sentence display */}
-        <div style={{ background:SURF, borderRadius:16, padding:"28px 24px", border:`1px solid ${BORDER}`, marginBottom:20, minHeight:100 }}>
-          <p style={{ fontSize:22, fontWeight:600, lineHeight:1.6, margin:0, letterSpacing:"-0.3px" }}>
-            {step.spans.map((s,i) => (
-              <span
-                key={i}
-                onClick={() => s.k && setTooltip(tooltip === s.k ? null : s.k)}
-                style={{
-                  color: s.n ? GREEN : TEXT,
-                  background: s.n && anim ? GREEN+"18" : "transparent",
-                  borderRadius:4,
-                  cursor: s.k ? "pointer" : "default",
-                  transition: "all 0.4s",
-                  textDecoration: s.k && !s.n ? "underline dotted "+MUTED : "none",
-                  textUnderlineOffset:3,
-                }}
-              >{s.t}</span>
-            ))}
-          </p>
-        </div>
-
-        {/* Tooltip */}
-        {tooltip && (
-          <div style={{ background:CARD, border:`1px solid ${BORDER}`, borderRadius:10, padding:"12px 16px", marginBottom:20, ...row({ gap:8 }) }}>
-            <span style={{ fontSize:13, color:ACCENT }}>◈</span>
-            <span style={{ fontSize:13, color:TEXT }}>{tooltip}</span>
-          </div>
-        )}
-
-        {/* Hint */}
-        {!tooltip && step.hint && (
-          <div style={{ ...row({ gap:6 }), marginBottom:20 }}>
-            <span style={{ fontSize:12, color:MUTED }}>↳</span>
-            <span style={{ fontSize:12, color:MUTED, fontStyle:"italic" }}>{step.hint}</span>
-          </div>
-        )}
-
-        {/* Instruction */}
-        <div style={{ background:CARD, borderRadius:10, padding:"12px 16px", marginBottom:28, border:`1px solid ${BORDER}` }}>
-          <p style={{ fontSize:13, color:MUTED, margin:0, lineHeight:1.6 }}>
-            {stepIdx === 0
-              ? `Your anchor word. The story starts here.`
-              : `Tap the highlighted word to see how it fits into the structure.`}
-          </p>
-        </div>
-
-        <Btn
-          onClick={isLast ? onDraftDone : onNext}
-          full
-          color={draft.color}
-        >
-          {isLast ? "Complete this draft →" : "Next word →"}
-        </Btn>
-      </div>
-    </Shell>
-  );
-}
-
-// ─── SCREEN 4: KNOW IT ───────────────────────────────────────────────────────
-function KnowIt({ anchor, draftIdx, onDone }) {
-  const draft = STORIES[anchor].drafts[draftIdx];
-  const newWords = draft.steps
-    .flatMap(s => s.spans.filter(sp => sp.n && sp.k))
-    .map(sp => ({ text: sp.t.trim().replace(/[.,]$/, ""), key: sp.k }));
-
-  const [marks, setMarks] = useState({});
-  const options = [
-    { id:"know", label:"Know it",    color:GREEN  },
-    { id:"seen", label:"Seen it",    color:GOLD   },
-    { id:"new",  label:"New to me",  color:ACCENT },
-  ];
-  const done = newWords.every(w => marks[w.text]);
-
-  return (
-    <Shell>
-      <div style={{ paddingTop:40, paddingBottom:48 }}>
-        <Logo small/>
-        <div style={{ marginTop:32, marginBottom:8, fontSize:20, fontWeight:800, letterSpacing:"-0.6px", color:"#fff" }}>
-          How well do you know each word?
-        </div>
-        <p style={{ fontSize:14, color:MUTED, margin:"0 0 32px" }}>Be honest — this shapes your path forward.</p>
-
-        {newWords.map((w,i) => (
-          <div key={i} style={{ marginBottom:16 }}>
-            <div style={{ ...row({ justifyContent:"space-between", marginBottom:10 }) }}>
-              <span style={{ fontSize:18, fontWeight:700, color:"#fff" }}>{w.text}</span>
-              <span style={{ fontSize:11, color:MUTED, fontStyle:"italic" }}>{w.key}</span>
-            </div>
-            <div style={row({ gap:8 })}>
-              {options.map(o => {
-                const active = marks[w.text] === o.id;
-                return (
-                  <button
-                    key={o.id}
-                    onClick={() => setMarks(prev=>({...prev,[w.text]:o.id}))}
-                    style={{
-                      flex:1, padding:"10px 0", borderRadius:8, border:`1.5px solid ${active ? o.color : BORDER}`,
-                      background: active ? o.color+"22" : CARD, color: active ? o.color : MUTED,
-                      fontSize:12, fontWeight:600, cursor:"pointer", transition:"all 0.15s", outline:"none",
-                    }}
-                  >{o.label}</button>
-                );
-              })}
-            </div>
-          </div>
-        ))}
-
-        <Divider/>
-        <Btn onClick={done ? onDone : undefined} full color={done ? ACCENT : MUTED}>
-          {done ? "Continue →" : `Mark all words (${Object.keys(marks).length}/${newWords.length})`}
-        </Btn>
-      </div>
-    </Shell>
-  );
-}
-
-// ─── SCREEN 5: MISSION ───────────────────────────────────────────────────────
-function Mission({ anchor, draftIdx, onDone }) {
-  const story = STORIES[anchor];
-  const draft = story.drafts[draftIdx];
-  return (
-    <Shell>
-      <div style={{ ...col({ justifyContent:"space-between", minHeight:"100vh", paddingTop:40, paddingBottom:48 }) }}>
-        <Logo small/>
-        <div style={col({ gap:20 })}>
-          <div style={{ fontSize:11, fontWeight:700, letterSpacing:"2px", color:GOLD, textTransform:"uppercase" }}>
-            Your mission
-          </div>
-          <div style={{ background:SURF, border:`1px solid ${BORDER}`, borderRadius:16, padding:"28px 24px" }}>
-            <p style={{ fontSize:18, fontWeight:600, lineHeight:1.7, margin:0, color:"#fff", letterSpacing:"-0.3px" }}>
-              {story.mission}
-            </p>
-          </div>
-          <p style={{ fontSize:14, color:MUTED, lineHeight:1.7, margin:0 }}>
-            Not a quiz. Not a test. Just one real use — a message, a thought out loud, a sentence you write to no one. That's how passive becomes active.
-          </p>
-          <div style={{ background:draft.color+"12", border:`1px solid ${draft.color}30`, borderRadius:12, padding:"14px 18px" }}>
-            <p style={{ fontSize:13, color:draft.color, margin:0, fontWeight:500 }}>
-              ✓ {draft.label} complete · {draft.sub} unlocked
-            </p>
-          </div>
-        </div>
-        <Btn onClick={onDone} full color={GOLD}>Got it →</Btn>
-      </div>
-    </Shell>
-  );
-}
-
-// ─── SCREEN 6: COMPLETE ──────────────────────────────────────────────────────
-function Complete({ anchor, draftIdx, onNextDraft, onCheckin }) {
-  const story  = STORIES[anchor];
-  const draft  = story.drafts[draftIdx];
-  const isLast = draftIdx === story.drafts.length - 1;
-  const finalStep = draft.steps[draft.steps.length - 1];
-
-  return (
-    <Shell>
-      <div style={{ paddingTop:40, paddingBottom:48 }}>
-        <Logo small/>
-        <div style={{ marginTop:32 }}>
-          <div style={{ fontSize:11, fontWeight:700, letterSpacing:"2px", color:GREEN, textTransform:"uppercase", marginBottom:16 }}>
-            {isLast ? "All three drafts complete" : `${draft.label} complete`}
-          </div>
-          <h2 style={{ fontSize:26, fontWeight:800, letterSpacing:"-1px", color:"#fff", margin:"0 0 24px" }}>
-            You built this from one word.
-          </h2>
-
-          {/* Final sentence */}
-          <div style={{ background:SURF, borderRadius:16, padding:"28px 24px", border:`1.5px solid ${GREEN}40`, marginBottom:24 }}>
-            <p style={{ fontSize:18, fontWeight:600, lineHeight:1.7, margin:0, color:"#fff", letterSpacing:"-0.2px" }}>
-              {finalStep.spans.map((s,i)=><span key={i}>{s.t}</span>)}
-            </p>
-            <div style={{ marginTop:16, ...row({ gap:8 }) }}>
-              <div style={{ width:6, height:6, borderRadius:"50%", background:GREEN }}/>
-              <span style={{ fontSize:12, color:MUTED }}>{draft.label} · {draft.sub}</span>
-            </div>
-          </div>
-
-          {/* Draft pills */}
-          <div style={row({ gap:8, marginBottom:32, flexWrap:"wrap" })}>
-            {story.drafts.map((d,i) => (
-              <div key={i} style={{
-                padding:"6px 14px", borderRadius:99,
-                background: i <= draftIdx ? d.color+"22" : CARD,
-                border:`1px solid ${i <= draftIdx ? d.color+"60" : BORDER}`,
-                fontSize:12, fontWeight:600,
-                color: i <= draftIdx ? d.color : MUTED,
-              }}>
-                {i <= draftIdx ? "✓ " : ""}{d.label}
+          <div style={{marginTop:32,marginBottom:8,fontSize:20,fontWeight:800,letterSpacing:-0.6,color:"#fff"}}>How well do you know each word?</div>
+          <p style={{fontSize:14,color:MUTED,margin:"0 0 32px"}}>Be honest — this shapes your path forward.</p>
+          {newWords.map(w=>(
+            <div key={w.text} style={{marginBottom:16}}>
+              <div className="row between" style={{marginBottom:10}}>
+                <span style={{fontSize:18,fontWeight:700,color:"#fff"}}>{w.text}</span>
+                <span style={{fontSize:11,color:MUTED,fontStyle:"italic"}}>{w.key}</span>
               </div>
-            ))}
-          </div>
+              <div className="row mark-row">
+                {opts.map(o=>(
+                  <button key={o.id} className="mark-btn"
+                    style={S.marks[w.text]===o.id?{borderColor:o.color,background:o.color+"22",color:o.color}:undefined}
+                    onClick={()=>up({marks:{...S.marks,[w.text]:o.id}})}>{o.label}</button>))}
+              </div>
+            </div>))}
+          <div className="divider"/>
+          <Btn label={done?"Continue →":`Mark all words (${marked}/${newWords.length})`} color={done?ACCENT:MUTED} onClick={()=>done&&up({screen:"mission"})}/>
+        </div>);
+    },
 
-          {/* Next word teaser */}
-          <div style={{ background:CARD, borderRadius:12, padding:"16px 18px", border:`1px solid ${BORDER}`, marginBottom:28 }}>
-            <div style={{ fontSize:11, color:MUTED, marginBottom:6, textTransform:"uppercase", letterSpacing:"0.5px" }}>Tomorrow's anchor</div>
-            <div style={row({ justifyContent:"space-between", alignItems:"center" })}>
-              <span style={{ fontSize:20, fontWeight:800, color:"#fff" }}>{story.nextWord}</span>
-              <span style={{ fontSize:14, color:MUTED, fontFamily:"'Arabic UI Text','Segoe UI',sans-serif", direction:"rtl" }}>
-                {WORDS.find(w=>w.id===story.nextWord)?.ar}
-              </span>
-            </div>
-          </div>
-
-          {isLast
-            ? <Btn onClick={onCheckin} full color={ACCENT}>See you tomorrow →</Btn>
-            : <Btn onClick={onNextDraft} full color={story.drafts[draftIdx+1].color}>
-                Continue to {story.drafts[draftIdx+1].label} — {story.drafts[draftIdx+1].sub} →
-              </Btn>
-          }
-        </div>
-      </div>
-    </Shell>
-  );
-}
-
-// ─── SCREEN 7: CHECK-IN ──────────────────────────────────────────────────────
-function CheckIn({ anchor, onRestart }) {
-  const story = STORIES[anchor];
-  const [ans, setAns] = useState(null);
-  const options = [
-    { id:"yes",    label:"Yes, I used it",     color:GREEN  },
-    { id:"almost", label:"I tried, almost",    color:GOLD   },
-    { id:"no",     label:"Honestly, no",       color:MUTED  },
-  ];
-  return (
-    <Shell>
-      <div style={{ ...col({ justifyContent:"space-between", minHeight:"100vh", paddingTop:40, paddingBottom:48 }) }}>
+    mission:()=>(
+      <div className="screen split">
         <Logo small/>
-        <div style={col({ gap:20 })}>
-          <div>
-            <div style={{ fontSize:11, fontWeight:700, letterSpacing:"2px", color:ACCENT, textTransform:"uppercase", marginBottom:16 }}>
-              Day 2 check-in
-            </div>
-            <h2 style={{ fontSize:22, fontWeight:800, letterSpacing:"-0.8px", color:"#fff", margin:0 }}>
-              Yesterday you said you'd use "{anchor}".
-            </h2>
-            <p style={{ fontSize:22, fontWeight:800, letterSpacing:"-0.8px", color:MUTED, margin:"4px 0 0" }}>
-              Did you?
-            </p>
+        <div className="col" style={{gap:20}}>
+          <div className="eyebrow" style={{color:GOLD}}>Your mission</div>
+          <div className="surf" style={{padding:"28px 24px"}}>
+            <p style={{fontSize:18,fontWeight:600,lineHeight:1.7,margin:0,color:"#fff",letterSpacing:-0.3}}>{story.mission}</p>
           </div>
-
-          <div style={col({ gap:10 })}>
-            {options.map(o => (
-              <button
-                key={o.id}
-                onClick={() => setAns(o.id)}
-                style={{
-                  padding:"16px 20px", borderRadius:12, textAlign:"left", cursor:"pointer",
-                  border:`1.5px solid ${ans===o.id ? o.color : BORDER}`,
-                  background: ans===o.id ? o.color+"18" : CARD,
-                  color: ans===o.id ? o.color : TEXT,
-                  fontSize:15, fontWeight:600, transition:"all 0.15s", outline:"none",
-                }}
-              >{o.label}</button>
-            ))}
+          <p style={{fontSize:14,color:MUTED,lineHeight:1.7,margin:0}}>Not a quiz. Not a test. Just one real use — a message, a thought out loud, a sentence you write to no one. That's how passive becomes active.</p>
+          <div style={{background:draft.color+"12",border:"1px solid "+draft.color+"30",borderRadius:12,padding:"14px 18px"}}>
+            <p style={{fontSize:13,color:draft.color,margin:0,fontWeight:500}}>✓ {draft.label} complete · {draft.sub} unlocked</p>
           </div>
-
-          {ans && (
-            <div style={{ background:SURF, borderRadius:12, padding:"18px 20px", border:`1px solid ${BORDER}` }}>
-              <p style={{ fontSize:15, lineHeight:1.7, color:TEXT, margin:0 }}>
-                {story.checkinResponses[ans]}
-              </p>
-            </div>
-          )}
         </div>
+        <Btn label="Got it →" onClick={()=>up({screen:"complete"})} color={GOLD}/>
+      </div>),
 
-        {ans && (
-          <Btn onClick={onRestart} full>Start today's story →</Btn>
-        )}
-      </div>
-    </Shell>
+    complete:()=>{
+      const last=draft.steps[draft.steps.length-1];
+      const nextWord=WORDS.find(w=>w.id===story.nextWord), nd=story.drafts[S.draftIdx+1];
+      return (
+        <div className="screen">
+          <Logo small/>
+          <div style={{marginTop:32}}>
+            <div className="eyebrow" style={{color:GREEN}}>{isLastDraft?"All three phases complete":draft.label+" complete"}</div>
+            <h2 style={{fontSize:26,fontWeight:800,letterSpacing:-1,color:"#fff",margin:"0 0 24px"}}>You built this from one word.</h2>
+            <div className="surf" style={{padding:"28px 24px",borderColor:GREEN+"40",marginBottom:24}}>
+              <p style={{fontSize:18,fontWeight:600,lineHeight:1.7,margin:0,color:"#fff",letterSpacing:-0.2}}>{last.spans.map(s=>s.t).join("")}</p>
+              <div className="row" style={{marginTop:16,gap:8}}>
+                <div style={{width:6,height:6,borderRadius:"50%",background:GREEN}}/>
+                <span style={{fontSize:12,color:MUTED}}>{draft.label} · {draft.sub}</span>
+              </div>
+            </div>
+            <div className="row wrap" style={{gap:8,marginBottom:32}}>
+              {story.drafts.map((d,i)=>(
+                <div key={d.id} className="pill" style={i<=S.draftIdx?{background:d.color+"22",borderColor:d.color+"60",color:d.color}:undefined}>{i<=S.draftIdx?"✓ ":""}{d.label}</div>))}
+            </div>
+            <div className="card" style={{padding:"16px 18px",marginBottom:28}}>
+              <div style={{fontSize:11,color:MUTED,marginBottom:6,textTransform:"uppercase",letterSpacing:.5}}>Tomorrow's anchor</div>
+              <div className="row between">
+                <span style={{fontSize:20,fontWeight:800,color:"#fff"}}>{story.nextWord}</span>
+                <span style={{fontSize:14,color:MUTED,direction:"rtl"}}>{nextWord?nextWord.ar:""}</span>
+              </div>
+            </div>
+            {isLastDraft
+              ? <Btn label="See you tomorrow →" onClick={()=>up({screen:"checkin"})} color={ACCENT}/>
+              : <Btn label={`Continue to ${nd.label} — ${nd.sub} →`} onClick={nextDraft} color={nd.color}/>}
+          </div>
+        </div>);
+    },
+
+    checkin:()=>{
+      const opts=[{id:"yes",label:"Yes, I used it",color:GREEN},{id:"almost",label:"I tried, almost",color:GOLD},{id:"no",label:"Honestly, no",color:MUTED}];
+      return (
+        <div className="screen split">
+          <Logo small/>
+          <div className="col" style={{gap:20}}>
+            <div>
+              <div className="eyebrow" style={{color:ACCENT}}>Day 2 check-in</div>
+              <h2 style={{fontSize:22,fontWeight:800,letterSpacing:-0.8,color:"#fff",margin:0}}>Yesterday you said you'd use "{S.anchor}".</h2>
+              <p style={{fontSize:22,fontWeight:800,letterSpacing:-0.8,color:MUTED,margin:"4px 0 0"}}>Did you?</p>
+            </div>
+            <div className="col" style={{gap:10}}>
+              {opts.map(o=>(
+                <button key={o.id} className="mark-btn"
+                  style={{flex:"none",width:"100%",textAlign:"left",padding:"16px 20px",...(S.ans===o.id?{borderColor:o.color,background:o.color+"18",color:o.color}:{})}}
+                  onClick={()=>up({ans:o.id})}>{o.label}</button>))}
+            </div>
+            {S.ans&&<div className="card" style={{padding:"18px 20px"}}><p style={{fontSize:15,lineHeight:1.7,margin:0}}>{story.checkinResponses[S.ans]}</p></div>}
+          </div>
+          {S.ans&&<Btn label="Start today's story →" onClick={()=>setS(INIT)} color={ACCENT}/>}
+        </div>);
+    },
+  };
+
+  return (
+    <div className="cl">
+      <style>{CSS}</style>
+      <div className="cl-app">{screens[S.screen]()}</div>
+    </div>
   );
-}
-
-// ─── ROOT APP ────────────────────────────────────────────────────────────────
-export default function CoreLang() {
-  const [screen,   setScreen]   = useState("welcome");
-  const [anchor,   setAnchor]   = useState(null);
-  const [draftIdx, setDraftIdx] = useState(0);
-  const [stepIdx,  setStepIdx]  = useState(0);
-
-  const reset = () => { setScreen("welcome"); setAnchor(null); setDraftIdx(0); setStepIdx(0); };
-
-  if (screen==="welcome")
-    return <Welcome onStart={()=>setScreen("picker")}/>;
-
-  if (screen==="picker")
-    return <WordPicker onPick={id=>{ setAnchor(id); setDraftIdx(0); setStepIdx(0); setScreen("story"); }}/>;
-
-  if (screen==="story")
-    return (
-      <StoryBuilder
-        anchor={anchor} draftIdx={draftIdx} stepIdx={stepIdx}
-        onNext={()=>setStepIdx(s=>s+1)}
-        onDraftDone={()=>setScreen("knowit")}
-      />
-    );
-
-  if (screen==="knowit")
-    return <KnowIt anchor={anchor} draftIdx={draftIdx} onDone={()=>setScreen("mission")}/>;
-
-  if (screen==="mission")
-    return <Mission anchor={anchor} draftIdx={draftIdx} onDone={()=>setScreen("complete")}/>;
-
-  if (screen==="complete")
-    return (
-      <Complete
-        anchor={anchor} draftIdx={draftIdx}
-        onNextDraft={()=>{ setDraftIdx(d=>d+1); setStepIdx(0); setScreen("story"); }}
-        onCheckin={()=>setScreen("checkin")}
-      />
-    );
-
-  if (screen==="checkin")
-    return <CheckIn anchor={anchor} onRestart={reset}/>;
-
-  return null;
 }
